@@ -1,932 +1,1183 @@
 /* =========================================================
    SRM BBA STUDENT PORTAL
-   Version 1
-   File: app.js
-
-   Frontend-only GitHub Pages version.
-   - Progress is saved in localStorage.
-   - Uploaded files are stored in IndexedDB on this browser.
-   - No real authentication is implemented in V1.
-   - Replace demo subjects/classes with official SRM data.
+   VERSION 2.0
+   Main Application Controller
    ========================================================= */
 
-"use strict";
 
 /* =========================================================
-   CONFIGURATION
+   01. CONFIGURATION
    ========================================================= */
 
-const CONFIG = {
-  storageKey: "srm_bba_portal_v1",
-  maxFileSize: 15 * 1024 * 1024,
-  breakMinutes: 15,
-  officialSrmLogin:
+const APP_CONFIG = {
+  version: "2.0",
+  programme: "SRM BBA",
+  academicPeriod: "2026–2029",
+
+  officialSRMLogin:
     "https://sp.srmist.edu.in/srmiststudentportal/students/loginManager/youLogin.jsp",
-  databaseName: "SRM_BBA_PORTAL_V1_FILES",
-  databaseVersion: 1,
-  objectStoreName: "materials"
+
+  maxMaterialSize:
+    15 * 1024 * 1024,
+
+  totalWeeksPerCourse: 15,
+
+  storageKey:
+    "srm_bba_portal_v2",
+
+  loginKey:
+    "srm_bba_login_v2",
+
+  sidebarKey:
+    "srm_bba_sidebar_v2",
+
+  themeKey:
+    "srm_bba_theme_v2",
+
+  sessionKey:
+    "srm_bba_session_v2"
 };
 
-/*
- * Demo subject list.
- * Replace these names with the official SRM BBA subject names
- * when the final syllabus/course list is entered.
- */
+
+/* =========================================================
+   02. DEMO LOGIN CREDENTIALS
+   =========================================================
+
+   IMPORTANT:
+   This is a FRONTEND-ONLY demo login.
+
+   GitHub Pages cannot securely hide passwords because
+   JavaScript is delivered to the browser.
+
+   For a real production portal, replace this section with
+   Firebase Authentication / Supabase / another backend.
+   ========================================================= */
+
+const LOGIN_CREDENTIALS = {
+  student: {
+    username: "js3513",
+    password: "Raman@7917",
+    name: "S Jayaraman",
+    role: "BBA Student"
+  },
+
+  admin: {
+    username: "Admin",
+    password: "Admin@SRM",
+    name: "SRM BBA Admin",
+    role: "Administrator"
+  }
+};
+
+
+/* =========================================================
+   03. SUBJECT DATA
+   =========================================================
+
+   These are editable portal subject labels.
+
+   Replace these names/codes with the exact official
+   semester subject list whenever required.
+   ========================================================= */
+
 const SUBJECTS = [
   {
-    id: "subject-1",
+    id: "subject-01",
     code: "BBA-01",
     name: "Principles of Management"
   },
   {
-    id: "subject-2",
+    id: "subject-02",
     code: "BBA-02",
     name: "Business Economics"
   },
   {
-    id: "subject-3",
+    id: "subject-03",
     code: "BBA-03",
     name: "Financial Accounting"
   },
   {
-    id: "subject-4",
+    id: "subject-04",
     code: "BBA-04",
     name: "Professional Communication"
   },
   {
-    id: "subject-5",
+    id: "subject-05",
     code: "BBA-05",
     name: "Marketing Management"
   },
   {
-    id: "subject-6",
+    id: "subject-06",
     code: "BBA-06",
-    name: "Human Resource Management"
+    name: "Production & Operations Management"
   },
   {
-    id: "subject-7",
+    id: "subject-07",
     code: "BBA-07",
-    name: "Business Statistics"
+    name: "Foundation of AI-ML"
   }
 ];
 
-const TOTAL_WEEKS = 15;
 
 /* =========================================================
-   DOM HELPERS
-   ========================================================= */
-
-const $ = (selector, parent = document) =>
-  parent.querySelector(selector);
-
-const $$ = (selector, parent = document) =>
-  Array.from(parent.querySelectorAll(selector));
-
-function byId(id) {
-  return document.getElementById(id);
-}
-
-/* =========================================================
-   GENERAL HELPERS
-   ========================================================= */
-
-function uid(prefix = "id") {
-  if (window.crypto && typeof window.crypto.randomUUID === "function") {
-    return `${prefix}-${window.crypto.randomUUID()}`;
-  }
-
-  return `${prefix}-${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2, 10)}`;
-}
-
-function escapeHTML(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function formatDate(value, options = {}) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "—";
-  }
-
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    ...options
-  }).format(date);
-}
-
-function formatDateTime(value) {
-  return formatDate(value, {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-}
-
-function formatTime(value) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "—";
-  }
-
-  return new Intl.DateTimeFormat("en-IN", {
-    hour: "2-digit",
-    minute: "2-digit"
-  }).format(date);
-}
-
-function formatBytes(bytes) {
-  if (!Number.isFinite(bytes) || bytes <= 0) {
-    return "0 KB";
-  }
-
-  const units = ["B", "KB", "MB", "GB"];
-  const index = Math.min(
-    Math.floor(Math.log(bytes) / Math.log(1024)),
-    units.length - 1
-  );
-
-  return `${(bytes / Math.pow(1024, index)).toFixed(
-    index === 0 ? 0 : 2
-  )} ${units[index]}`;
-}
-
-function extensionOf(filename) {
-  const name = String(filename || "");
-  const parts = name.split(".");
-
-  if (parts.length < 2) {
-    return "";
-  }
-
-  return parts.pop().toLowerCase();
-}
-
-function materialType(filename) {
-  const extension = extensionOf(filename);
-
-  const types = {
-    pdf: "PDF",
-    doc: "Word",
-    docx: "Word",
-    ppt: "PowerPoint",
-    pptx: "PowerPoint",
-    xls: "Excel",
-    xlsx: "Excel",
-    txt: "Text",
-    csv: "CSV",
-    jpg: "Image",
-    jpeg: "Image",
-    png: "Image",
-    webp: "Image"
-  };
-
-  return types[extension] || extension.toUpperCase() || "Document";
-}
-
-function getSubject(subjectId) {
-  return SUBJECTS.find((subject) => subject.id === subjectId);
-}
-
-function subjectName(subjectId) {
-  return getSubject(subjectId)?.name || "General";
-}
-
-function normalizeDateInput(date, time) {
-  if (!date || !time) {
-    return null;
-  }
-
-  const [year, month, day] = date.split("-").map(Number);
-  const [hour, minute] = time.split(":").map(Number);
-
-  const localDate = new Date(
-    year,
-    month - 1,
-    day,
-    hour,
-    minute,
-    0,
-    0
-  );
-
-  if (Number.isNaN(localDate.getTime())) {
-    return null;
-  }
-
-  return localDate.toISOString();
-}
-
-function futureDate(daysFromNow, hour, minute) {
-  const date = new Date();
-
-  date.setDate(date.getDate() + daysFromNow);
-  date.setHours(hour, minute, 0, 0);
-
-  return date.toISOString();
-}
-
-/* =========================================================
-   DEFAULT DATA
+   04. DEFAULT APPLICATION STATE
    ========================================================= */
 
 function createEmptyProgress() {
   const progress = {};
 
-  SUBJECTS.forEach((subject) => {
-    progress[subject.id] = Array.from(
-      { length: TOTAL_WEEKS },
-      () => "pending"
-    );
+  SUBJECTS.forEach(subject => {
+    progress[subject.id] =
+      Array(APP_CONFIG.totalWeeksPerCourse)
+        .fill("pending");
   });
 
   return progress;
 }
 
+
 function createDefaultClasses() {
+  const now = new Date();
+
+  const classes = [];
+
+  /*
+   * Demo schedule is generated relative to the current date
+   * so the countdown does not become permanently expired.
+   */
+
   const schedule = [
-    [1, 18, 0, 60, 0],
-    [2, 19, 0, 60, 0],
-    [3, 18, 0, 60, 0],
-    [4, 20, 0, 60, 0],
-    [6, 18, 0, 60, 0],
-    [7, 19, 0, 60, 0],
-    [9, 18, 0, 60, 0]
+    {
+      subjectIndex: 0,
+      days: 1,
+      hour: 18,
+      minute: 0
+    },
+    {
+      subjectIndex: 1,
+      days: 2,
+      hour: 19,
+      minute: 0
+    },
+    {
+      subjectIndex: 2,
+      days: 3,
+      hour: 18,
+      minute: 0
+    },
+    {
+      subjectIndex: 3,
+      days: 4,
+      hour: 18,
+      minute: 0
+    },
+    {
+      subjectIndex: 4,
+      days: 5,
+      hour: 19,
+      minute: 0
+    },
+    {
+      subjectIndex: 5,
+      days: 6,
+      hour: 18,
+      minute: 0
+    },
+    {
+      subjectIndex: 6,
+      days: 7,
+      hour: 19,
+      minute: 0
+    },
+    {
+      subjectIndex: 0,
+      days: 9,
+      hour: 18,
+      minute: 0
+    },
+    {
+      subjectIndex: 4,
+      days: 11,
+      hour: 19,
+      minute: 0
+    },
+    {
+      subjectIndex: 6,
+      days: 13,
+      hour: 18,
+      minute: 0
+    }
   ];
 
-  return schedule.map((item, index) => {
-    const [days, hour, minute, duration, subjectIndex] = item;
-    const subject =
-      SUBJECTS[subjectIndex % SUBJECTS.length];
+  schedule.forEach((item, index) => {
+    const date = new Date(now);
 
-    return {
-      id: `default-class-${index + 1}`,
-      subjectId: subject.id,
-      title: `${subject.name} — Live Class`,
-      start: futureDate(days, hour, minute),
-      durationMinutes: duration,
-      zoomLink: "https://zoom.us/j/00000000000",
-      meetingId: "000 0000 0000",
-      host: "BBA Faculty",
-      isDemo: true,
-      createdAt: new Date().toISOString()
-    };
+    date.setDate(
+      date.getDate() + item.days
+    );
+
+    date.setHours(
+      item.hour,
+      item.minute,
+      0,
+      0
+    );
+
+    const end = new Date(date);
+
+    end.setMinutes(
+      end.getMinutes() + 60
+    );
+
+    const subject =
+      SUBJECTS[item.subjectIndex];
+
+    classes.push({
+      id:
+        "class-" +
+        Date.now() +
+        "-" +
+        index,
+
+      subjectId:
+        subject.id,
+
+      subjectName:
+        subject.name,
+
+      start:
+        date.toISOString(),
+
+      end:
+        end.toISOString(),
+
+      zoom:
+        "https://zoom.us/j/00000000000",
+
+      topic:
+        subject.name + " — Live Class",
+
+      status:
+        "scheduled"
+    });
   });
+
+  return classes;
 }
+
 
 function createDefaultAnnouncements() {
   return [
     {
-      id: "notice-1",
-      title: "Welcome to SRM BBA Student Portal",
+      id: createId("notice"),
+      title: "Welcome to the SRM BBA Portal",
       message:
-        "Use this portal to track weekly progress, live classes, assignments, study materials and academic activities.",
-      type: "General",
-      createdAt: new Date().toISOString(),
-      pinned: true
+        "Use this portal to track courses, weekly progress, live classes, study materials and academic tasks.",
+      type: "Portal",
+      pinned: true,
+      createdAt: new Date().toISOString()
     },
     {
-      id: "notice-2",
-      title: "Study Progress",
+      id: createId("notice"),
+      title: "Weekly Progress Tracking",
       message:
-        "Complete each weekly activity and use the Save button in every subject to retain your progress.",
+        "Click a week once to mark it In Process. Double-click the same week to mark it Complete, then press Save.",
       type: "Academic",
-      createdAt: new Date().toISOString(),
-      pinned: false
+      pinned: false,
+      createdAt: new Date().toISOString()
     }
   ];
 }
 
+
 function createDefaultState() {
   return {
-    version: 1,
+    progress:
+      createEmptyProgress(),
 
-    progress: createEmptyProgress(),
+    classes:
+      createDefaultClasses(),
 
-    classes: createDefaultClasses(),
+    announcements:
+      createDefaultAnnouncements(),
 
-    announcements: createDefaultAnnouncements(),
+    materials:
+      [],
 
-    materials: [],
+    assignments:
+      createDefaultAssignments(),
 
-    assignments: [
-      {
-        id: "assignment-1",
-        title: "Weekly Assignment",
-        subjectId: SUBJECTS[0].id,
-        type: "Assignment",
-        dueDate: futureDate(3, 23, 59),
-        status: "Pending"
-      },
-      {
-        id: "assignment-2",
-        title: "MCQ Assessment",
-        subjectId: SUBJECTS[1].id,
-        type: "MCQ",
-        dueDate: futureDate(5, 23, 59),
-        status: "Pending"
-      },
-      {
-        id: "assignment-3",
-        title: "LAQ / ELQ Practice",
-        subjectId: SUBJECTS[4].id,
-        type: "LAQ / ELQ",
-        dueDate: futureDate(7, 23, 59),
-        status: "Pending"
-      },
-      {
-        id: "assignment-4",
-        title: "Discussion Activity",
-        subjectId: SUBJECTS[3].id,
-        type: "Discussion",
-        dueDate: futureDate(9, 23, 59),
-        status: "Pending"
-      }
-    ],
+    audit:
+      [],
 
     session: {
       startedAt: null,
-      endedAt: null,
-      breakUntil: null
+      endedAt: null
     },
 
-    audit: [],
-
-    preferences: {
-      theme: "light",
-      sidebarCollapsed: false,
-      adminMinimized: false
-    }
+    adminMinimized:
+      false
   };
 }
 
-/* =========================================================
-   STATE MANAGEMENT
-   ========================================================= */
 
-let state = createDefaultState();
-let draftProgress = {};
-let breakInterval = null;
-let countdownInterval = null;
-
-function clone(value) {
-  return JSON.parse(JSON.stringify(value));
+function createDefaultAssignments() {
+  return [
+    {
+      id: "assignment-01",
+      title: "Week 1–3 Tasks",
+      description: "Assignments, MCQ & ELQ",
+      status: "tracked"
+    },
+    {
+      id: "assignment-02",
+      title: "Week 4–9 Tasks",
+      description: "Weekly academic workflow",
+      status: "tracked"
+    },
+    {
+      id: "assignment-03",
+      title: "Week 10–15 Tasks",
+      description: "Final weekly requirements",
+      status: "tracked"
+    },
+    {
+      id: "assignment-04",
+      title: "Discussion Activities",
+      description: "Course discussion participation",
+      status: "tracked"
+    },
+    {
+      id: "assignment-05",
+      title: "Learning Assignments",
+      description: "Subject learning activities",
+      status: "tracked"
+    },
+    {
+      id: "assignment-06",
+      title: "LAQ / ELQ",
+      description: "Long-answer academic questions",
+      status: "tracked"
+    },
+    {
+      id: "assignment-07",
+      title: "MCQ Activities",
+      description: "Multiple-choice activities",
+      status: "tracked"
+    },
+    {
+      id: "assignment-08",
+      title: "Revision Work",
+      description: "Weekly revision activities",
+      status: "tracked"
+    },
+    {
+      id: "assignment-09",
+      title: "Study Notes",
+      description: "Notebook and study-material preparation",
+      status: "tracked"
+    },
+    {
+      id: "assignment-10",
+      title: "Course Review",
+      description: "Subject review activities",
+      status: "tracked"
+    },
+    {
+      id: "assignment-11",
+      title: "Academic Preparation",
+      description: "Examination preparation",
+      status: "tracked"
+    },
+    {
+      id: "assignment-12",
+      title: "Final Review",
+      description: "Final course checklist",
+      status: "tracked"
+    }
+  ];
 }
 
+
+/* =========================================================
+   05. GLOBAL VARIABLES
+   ========================================================= */
+
+let state = null;
+
+let currentUser = null;
+
+let countdownInterval = null;
+
+let breakInterval = null;
+
+let materialDatabase = null;
+
+let draftProgress = {};
+
+let currentSection = "dashboard";
+
+
+/* =========================================================
+   06. BASIC HELPERS
+   ========================================================= */
+
+function $(selector) {
+  return document.querySelector(selector);
+}
+
+
+function $all(selector) {
+  return Array.from(
+    document.querySelectorAll(selector)
+  );
+}
+
+
+function createId(prefix = "id") {
+  if (
+    window.crypto &&
+    typeof window.crypto.randomUUID === "function"
+  ) {
+    return prefix + "-" + window.crypto.randomUUID();
+  }
+
+  return (
+    prefix +
+    "-" +
+    Date.now() +
+    "-" +
+    Math.random()
+      .toString(36)
+      .slice(2, 10)
+  );
+}
+
+
+function escapeHTML(value) {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+
+function formatBytes(bytes) {
+  if (!bytes) {
+    return "0 KB";
+  }
+
+  const units = [
+    "Bytes",
+    "KB",
+    "MB",
+    "GB"
+  ];
+
+  const index =
+    Math.floor(
+      Math.log(bytes) /
+      Math.log(1024)
+    );
+
+  return (
+    Math.round(
+      (bytes /
+        Math.pow(1024, index)) *
+        100
+    ) / 100 +
+    " " +
+    units[index]
+  );
+}
+
+
+function formatDate(dateValue) {
+  const date =
+    dateValue instanceof Date
+      ? dateValue
+      : new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  return date.toLocaleDateString(
+    "en-IN",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    }
+  );
+}
+
+
+function formatTime(dateValue) {
+  const date =
+    dateValue instanceof Date
+      ? dateValue
+      : new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  return date.toLocaleTimeString(
+    "en-IN",
+    {
+      hour: "2-digit",
+      minute: "2-digit"
+    }
+  );
+}
+
+
+function formatDateTime(dateValue) {
+  return (
+    formatDate(dateValue) +
+    " • " +
+    formatTime(dateValue)
+  );
+}
+
+
+function getSubject(subjectId) {
+  return (
+    SUBJECTS.find(
+      subject =>
+        subject.id === subjectId
+    ) || null
+  );
+}
+
+
+function getSubjectName(subjectId) {
+  const subject =
+    getSubject(subjectId);
+
+  return subject
+    ? subject.name
+    : "Unknown Subject";
+}
+
+
+function saveState() {
+  localStorage.setItem(
+    APP_CONFIG.storageKey,
+    JSON.stringify(state)
+  );
+}
+
+
 function loadState() {
-  const raw = localStorage.getItem(CONFIG.storageKey);
+  const raw =
+    localStorage.getItem(
+      APP_CONFIG.storageKey
+    );
 
   if (!raw) {
-    state = createDefaultState();
+    state =
+      createDefaultState();
+
     saveState();
+
     return;
   }
 
   try {
-    const parsed = JSON.parse(raw);
-    const defaults = createDefaultState();
+    const parsed =
+      JSON.parse(raw);
+
+    const defaults =
+      createDefaultState();
 
     state = {
       ...defaults,
       ...parsed,
 
-      preferences: {
-        ...defaults.preferences,
-        ...(parsed.preferences || {})
-      },
+      progress:
+        parsed.progress ||
+        defaults.progress,
 
-      session: {
-        ...defaults.session,
-        ...(parsed.session || {})
-      },
+      classes:
+        Array.isArray(parsed.classes)
+          ? parsed.classes
+          : defaults.classes,
 
-      progress: {
-        ...defaults.progress,
-        ...(parsed.progress || {})
-      },
+      announcements:
+        Array.isArray(parsed.announcements)
+          ? parsed.announcements
+          : defaults.announcements,
 
-      classes: Array.isArray(parsed.classes)
-        ? parsed.classes
-        : defaults.classes,
+      materials:
+        Array.isArray(parsed.materials)
+          ? parsed.materials
+          : [],
 
-      announcements: Array.isArray(parsed.announcements)
-        ? parsed.announcements
-        : defaults.announcements,
+      assignments:
+        Array.isArray(parsed.assignments)
+          ? parsed.assignments
+          : defaults.assignments,
 
-      materials: Array.isArray(parsed.materials)
-        ? parsed.materials
-        : [],
-
-      assignments: Array.isArray(parsed.assignments)
-        ? parsed.assignments
-        : defaults.assignments,
-
-      audit: Array.isArray(parsed.audit)
-        ? parsed.audit
-        : []
+      audit:
+        Array.isArray(parsed.audit)
+          ? parsed.audit
+          : []
     };
 
-    SUBJECTS.forEach((subject) => {
+    SUBJECTS.forEach(subject => {
       if (
-        !Array.isArray(state.progress[subject.id]) ||
-        state.progress[subject.id].length !== TOTAL_WEEKS
+        !Array.isArray(
+          state.progress[subject.id]
+        )
       ) {
-        state.progress[subject.id] = Array.from(
-          { length: TOTAL_WEEKS },
-          () => "pending"
-        );
+        state.progress[subject.id] =
+          Array(
+            APP_CONFIG.totalWeeksPerCourse
+          ).fill("pending");
       }
+
+      while (
+        state.progress[subject.id].length <
+        APP_CONFIG.totalWeeksPerCourse
+      ) {
+        state.progress[subject.id]
+          .push("pending");
+      }
+
+      state.progress[subject.id] =
+        state.progress[subject.id].slice(
+          0,
+          APP_CONFIG.totalWeeksPerCourse
+        );
     });
+
   } catch (error) {
-    console.error("Unable to load saved portal data:", error);
-    state = createDefaultState();
+    console.error(
+      "State loading error:",
+      error
+    );
+
+    state =
+      createDefaultState();
+
     saveState();
   }
 }
 
-function saveState() {
-  localStorage.setItem(
-    CONFIG.storageKey,
-    JSON.stringify(state)
-  );
-}
+
+/* =========================================================
+   07. AUDIT LOG
+   ========================================================= */
 
 function addAudit(action, details = "") {
-  state.audit.unshift({
-    id: uid("audit"),
-    action,
-    details,
-    timestamp: new Date().toISOString()
-  });
-
-  state.audit = state.audit.slice(0, 100);
-  saveState();
-}
-
-/* =========================================================
-   TOAST
-   ========================================================= */
-
-function showToast(message, type = "success") {
-  let container = byId("toastContainer");
-
-  if (!container) {
-    container = document.createElement("div");
-    container.id = "toastContainer";
-    container.className = "toast-container";
-    document.body.appendChild(container);
-  }
-
-  const toast = document.createElement("div");
-  toast.className = `toast toast-${type}`;
-  toast.textContent = message;
-
-  container.appendChild(toast);
-
-  setTimeout(() => {
-    toast.classList.add("toast-hide");
-
-    setTimeout(() => {
-      toast.remove();
-    }, 250);
-  }, 3000);
-}
-
-/* =========================================================
-   NAVIGATION
-   ========================================================= */
-
-const sectionTitles = {
-  dashboard: "Dashboard",
-  courses: "Courses & Weekly Progress",
-  live: "Live Classes",
-  materials: "Study Materials",
-  assignments: "Assignments & Assessments",
-  calendar: "Academic Calendar",
-  exams: "Examination Overview",
-  announcements: "Announcements",
-  analytics: "Analytics",
-  profile: "Profile & Session",
-  admin: "Admin Control Centre"
-};
-
-function showSection(sectionName) {
-  const sections = $$(".page-section");
-
-  sections.forEach((section) => {
-    section.classList.toggle(
-      "active",
-      section.id === sectionName
-    );
-  });
-
-  $$(".nav-item").forEach((item) => {
-    item.classList.toggle(
-      "active",
-      item.dataset.section === sectionName
-    );
-  });
-
-  const title = byId("pageTitle");
-
-  if (title) {
-    title.textContent =
-      sectionTitles[sectionName] || "Student Portal";
-  }
-
-  const sidebar = byId("sidebar");
-
-  if (
-    window.innerWidth <= 900 &&
-    sidebar &&
-    !sidebar.classList.contains("collapsed")
-  ) {
-    sidebar.classList.remove("mobile-open");
-  }
-
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
-}
-
-function setupNavigation() {
-  $$(".nav-item[data-section]").forEach((item) => {
-    item.addEventListener("click", () => {
-      showSection(item.dataset.section);
-    });
-  });
-
-  $$("[data-section]").forEach((element) => {
-    if (
-      element.classList.contains("nav-item") ||
-      element.dataset.section === undefined
-    ) {
-      return;
-    }
-
-    element.addEventListener("click", () => {
-      showSection(element.dataset.section);
-    });
-  });
-}
-
-/* =========================================================
-   SIDEBAR
-   ========================================================= */
-
-function applySidebarPreference() {
-  const sidebar = byId("sidebar");
-
-  if (!sidebar) {
+  if (!state) {
     return;
   }
 
-  sidebar.classList.toggle(
-    "collapsed",
-    Boolean(state.preferences.sidebarCollapsed)
-  );
-}
-
-function setupSidebar() {
-  const collapseButton = byId("sidebarCollapse");
-  const sidebar = byId("sidebar");
-  const mobileButton = $(".mobile-menu");
-
-  collapseButton?.addEventListener("click", () => {
-    state.preferences.sidebarCollapsed =
-      !state.preferences.sidebarCollapsed;
-
-    saveState();
-    applySidebarPreference();
+  state.audit.unshift({
+    id: createId("audit"),
+    action,
+    details,
+    user:
+      currentUser
+        ? currentUser.username
+        : "system",
+    role:
+      currentUser
+        ? currentUser.role
+        : "system",
+    timestamp:
+      new Date().toISOString()
   });
 
-  mobileButton?.addEventListener("click", () => {
-    sidebar?.classList.toggle("mobile-open");
-  });
+  state.audit =
+    state.audit.slice(0, 100);
 
-  applySidebarPreference();
+  saveState();
 }
+
 
 /* =========================================================
-   THEME
+   08. LOGIN STORAGE
    ========================================================= */
 
-function applyTheme() {
-  document.documentElement.dataset.theme =
-    state.preferences.theme;
-
-  document.body.classList.toggle(
-    "dark-mode",
-    state.preferences.theme === "dark"
+function saveLoginSession(user) {
+  localStorage.setItem(
+    APP_CONFIG.loginKey,
+    JSON.stringify({
+      username: user.username,
+      name: user.name,
+      role: user.role,
+      loginAt: new Date().toISOString()
+    })
   );
 }
 
-function setupTheme() {
-  const button = byId("themeToggle");
 
-  button?.addEventListener("click", () => {
-    state.preferences.theme =
-      state.preferences.theme === "dark"
-        ? "light"
-        : "dark";
-
-    saveState();
-    applyTheme();
-
-    showToast(
-      state.preferences.theme === "dark"
-        ? "Dark mode enabled."
-        : "Light mode enabled."
+function loadLoginSession() {
+  const raw =
+    localStorage.getItem(
+      APP_CONFIG.loginKey
     );
-  });
 
-  applyTheme();
-}
+  if (!raw) {
+    return null;
+  }
 
-/* =========================================================
-   SESSION
-   ========================================================= */
-
-function ensureSessionStarted() {
-  if (!state.session.startedAt) {
-    state.session.startedAt = new Date().toISOString();
-    state.session.endedAt = null;
-
-    addAudit("Session started", "Student portal session opened.");
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
   }
 }
 
-function endSession() {
-  state.session.endedAt = new Date().toISOString();
-  state.session.breakUntil = null;
 
-  addAudit("Session ended", "Student portal session ended.");
+function clearLoginSession() {
+  localStorage.removeItem(
+    APP_CONFIG.loginKey
+  );
+}
 
-  saveState();
+
+/* =========================================================
+   09. LOGIN UI
+   ========================================================= */
+
+function initializeLogin() {
+
+  const loginScreen =
+    $("#loginScreen");
+
+  const portalApp =
+    $("#portalApp");
+
+  const savedUser =
+    loadLoginSession();
+
+  if (savedUser) {
+
+    currentUser =
+      savedUser;
+
+    if (loginScreen) {
+      loginScreen.hidden = true;
+    }
+
+    if (portalApp) {
+      portalApp.hidden = false;
+    }
+
+    startApplication();
+    return;
+  }
+
+  if (loginScreen) {
+    loginScreen.hidden = false;
+  }
+
+  if (portalApp) {
+    portalApp.hidden = true;
+  }
+
+  bindLoginEvents();
+}
+
+
+function bindLoginEvents() {
+
+  const roleButtons =
+    $all("[data-login-role]");
+
+  roleButtons.forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        const role =
+          button.dataset.loginRole;
+
+        roleButtons.forEach(item =>
+          item.classList.remove(
+            "active"
+          )
+        );
+
+        button.classList.add(
+          "active"
+        );
+
+        $all(".login-form")
+          .forEach(form =>
+            form.classList.remove(
+              "active"
+            )
+          );
+
+        const form =
+          document.querySelector(
+            `[data-login-form="${role}"]`
+          );
+
+        if (form) {
+          form.classList.add(
+            "active"
+          );
+        }
+      }
+    );
+  });
+
+
+  $all(".password-toggle")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const input =
+            button.parentElement
+              .querySelector("input");
+
+          if (!input) {
+            return;
+          }
+
+          if (
+            input.type === "password"
+          ) {
+
+            input.type = "text";
+
+            button.textContent =
+              "🙈";
+
+          } else {
+
+            input.type = "password";
+
+            button.textContent =
+              "👁";
+          }
+        }
+      );
+    });
+
+
+  const studentForm =
+    $("#studentLoginForm");
+
+  if (studentForm) {
+
+    studentForm.addEventListener(
+      "submit",
+      event => {
+
+        event.preventDefault();
+
+        handleLogin(
+          "student",
+          studentForm
+        );
+      }
+    );
+  }
+
+
+  const adminForm =
+    $("#adminLoginForm");
+
+  if (adminForm) {
+
+    adminForm.addEventListener(
+      "submit",
+      event => {
+
+        event.preventDefault();
+
+        handleLogin(
+          "admin",
+          adminForm
+        );
+      }
+    );
+  }
+
+
+  const officialButtons =
+    $all(
+      "[data-official-login], #officialLoginButton"
+    );
+
+  officialButtons.forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        window.open(
+          APP_CONFIG.officialSRMLogin,
+          "_blank",
+          "noopener,noreferrer"
+        );
+      }
+    );
+  });
+}
+
+
+function handleLogin(role, form) {
+
+  const usernameInput =
+    form.querySelector(
+      'input[name="username"]'
+    ) ||
+    form.querySelector(
+      "#studentUsername, #adminUsername"
+    );
+
+  const passwordInput =
+    form.querySelector(
+      'input[name="password"]'
+    ) ||
+    form.querySelector(
+      "#studentPassword, #adminPassword"
+    );
+
+  const message =
+    form.querySelector(
+      ".login-message"
+    ) ||
+    document.querySelector(
+      `[data-login-message="${role}"]`
+    );
+
+
+  const username =
+    usernameInput
+      ? usernameInput.value.trim()
+      : "";
+
+  const password =
+    passwordInput
+      ? passwordInput.value
+      : "";
+
+
+  const credentials =
+    LOGIN_CREDENTIALS[role];
+
+
+  if (
+    username === credentials.username &&
+    password === credentials.password
+  ) {
+
+    currentUser = {
+      username:
+        credentials.username,
+
+      name:
+        credentials.name,
+
+      role:
+        credentials.role,
+
+      loginAt:
+        new Date().toISOString()
+    };
+
+    saveLoginSession(
+      currentUser
+    );
+
+    startSession();
+
+    addAudit(
+      "Login",
+      role +
+        " login successful"
+    );
+
+    if (message) {
+      message.textContent =
+        "Login successful.";
+      message.classList.add(
+        "success"
+      );
+    }
+
+    const loginScreen =
+      $("#loginScreen");
+
+    const portalApp =
+      $("#portalApp");
+
+    if (loginScreen) {
+      loginScreen.hidden = true;
+    }
+
+    if (portalApp) {
+      portalApp.hidden = false;
+    }
+
+    startApplication();
+
+    showToast(
+      "Welcome, " +
+        currentUser.name,
+      "success"
+    );
+
+    return;
+  }
+
+
+  if (message) {
+    message.textContent =
+      "Incorrect username or password.";
+    message.classList.remove(
+      "success"
+    );
+  }
+
+  showToast(
+    "Incorrect login details.",
+    "error"
+  );
+}
+
+
+/* =========================================================
+   10. START APPLICATION
+   ========================================================= */
+
+function startApplication() {
+
+  loadState();
+
+  if (
+    !state.session ||
+    !state.session.startedAt
+  ) {
+    startSession();
+  }
+
+  applyTheme();
+
+  applySidebarState();
+
+  initializeIndexedDB();
+
+  initializeNavigation();
+
+  initializeTopbar();
+
+  initializeDashboard();
+
+  initializeCourses();
+
+  initializeLiveClasses();
+
+  initializeMaterials();
+
+  initializeAssignments();
+
+  initializeCalendar();
+
+  initializeAnnouncements();
+
+  initializeAnalytics();
+
+  initializeProfile();
+
+  initializeAdmin();
+
+  initializeModals();
+
+  initializeSearch();
+
+  initializeQuickAccess();
+
+  renderAll();
+
+  startCountdown();
+
+  startBreakTimerLoop();
 
   updateSessionUI();
 
-  showToast("Session ended.", "info");
-}
+  enforceAdminVisibility();
 
-function sessionIsActive() {
-  if (!state.session.startedAt) {
-    return false;
-  }
-
-  if (!state.session.endedAt) {
-    return true;
-  }
-
-  return (
-    new Date(state.session.startedAt).getTime() >
-    new Date(state.session.endedAt).getTime()
-  );
-}
-
-function updateSessionUI() {
-  const active = sessionIsActive();
-
-  const statusElements = [
-    byId("studentStatus"),
-    byId("sessionStatus")
-  ];
-
-  statusElements.forEach((element) => {
-    if (!element) {
-      return;
-    }
-
-    element.classList.toggle("active", active);
-
-    const label = element.querySelector(".status-text");
-
-    if (label) {
-      label.textContent = active
-        ? "Active"
-        : "Offline";
-    } else if (
-      element.classList.contains("status-pill")
-    ) {
-      element.textContent = active
-        ? "● Active"
-        : "● Offline";
-    }
-  });
-
-  const meta = byId("sessionMeta");
-
-  if (meta) {
-    if (!state.session.startedAt) {
-      meta.textContent = "No active session";
-    } else {
-      meta.textContent = active
-        ? `Started ${formatDateTime(
-            state.session.startedAt
-          )}`
-        : `Ended ${formatDateTime(
-            state.session.endedAt
-          )}`;
-    }
-  }
-
-  const profileSession = byId("profileSession");
-
-  if (profileSession) {
-    profileSession.innerHTML = `
-      <strong>${active ? "Active" : "Offline"}</strong>
-      <span>
-        ${
-          state.session.startedAt
-            ? `Started: ${escapeHTML(
-                formatDateTime(state.session.startedAt)
-              )}`
-            : "No session recorded"
-        }
-      </span>
-      ${
-        state.session.endedAt
-          ? `<span>Ended: ${escapeHTML(
-              formatDateTime(state.session.endedAt)
-            )}</span>`
-          : ""
-      }
-    `;
-  }
-}
-
-/* =========================================================
-   BREAK TIMER
-   ========================================================= */
-
-function openBreakModal() {
-  const modal = byId("breakModal");
-
-  if (modal) {
-    modal.classList.add("open");
-  }
-}
-
-function closeBreakModal() {
-  const modal = byId("breakModal");
-
-  if (modal) {
-    modal.classList.remove("open");
-  }
-}
-
-function startBreak() {
-  if (!sessionIsActive()) {
-    showToast(
-      "Start an active session before taking a break.",
-      "warning"
-    );
-    return;
-  }
-
-  state.session.breakUntil =
-    Date.now() + CONFIG.breakMinutes * 60 * 1000;
-
-  saveState();
-
-  openBreakModal();
-  updateBreakTimer();
-
-  if (breakInterval) {
-    clearInterval(breakInterval);
-  }
-
-  breakInterval = setInterval(
-    updateBreakTimer,
+  setInterval(
+    updateSessionUI,
     1000
   );
-
-  addAudit(
-    "Break started",
-    `${CONFIG.breakMinutes}-minute break started.`
-  );
 }
 
-function updateBreakTimer() {
-  const timer = byId("breakTimer");
-
-  if (!state.session.breakUntil) {
-    if (breakInterval) {
-      clearInterval(breakInterval);
-      breakInterval = null;
-    }
-
-    return;
-  }
-
-  const remaining = Math.max(
-    0,
-    state.session.breakUntil - Date.now()
-  );
-
-  const totalSeconds = Math.ceil(
-    remaining / 1000
-  );
-
-  const minutes = Math.floor(
-    totalSeconds / 60
-  );
-
-  const seconds = totalSeconds % 60;
-
-  if (timer) {
-    timer.textContent =
-      `${String(minutes).padStart(2, "0")}:` +
-      `${String(seconds).padStart(2, "0")}`;
-  }
-
-  if (remaining <= 0) {
-    state.session.breakUntil = null;
-    saveState();
-
-    if (breakInterval) {
-      clearInterval(breakInterval);
-      breakInterval = null;
-    }
-
-    closeBreakModal();
-
-    showToast("Your 15-minute break has ended.", "info");
-    addAudit("Break ended", "Break timer completed.");
-  }
-}
-
-function stopBreak() {
-  state.session.breakUntil = null;
-  saveState();
-
-  if (breakInterval) {
-    clearInterval(breakInterval);
-    breakInterval = null;
-  }
-
-  closeBreakModal();
-
-  showToast("Break stopped.", "info");
-}
 
 /* =========================================================
-   SUBJECT OPTIONS
+   11. NAVIGATION
    ========================================================= */
 
-function populateSubjectSelects() {
-  const selects = $$(
-    "#classSubject, #materialSubject, #materialSubjectFilter"
-  );
+const SECTION_TITLES = {
+  dashboard: "Dashboard",
+  courses: "My Courses",
+  live: "Live Classes",
+  materials: "Study Materials",
+  assignments: "Assignments",
+  calendar: "Calendar",
+  exams: "Examinations",
+  announcements: "Announcements",
+  analytics: "Analytics",
+  profile: "Profile",
+  admin: "Admin Control Centre"
+};
 
-  selects.forEach((select) => {
-    const currentValue = select.value;
 
-    const isFilter =
-      select.id === "materialSubjectFilter";
+function initializeNavigation() {
 
-    select.innerHTML =
-      isFilter
-        ? `<option value="">All Subjects</option>`
-        : `<option value="">Select subject</option>`;
+  $all(
+    "[data-section]"
+  ).forEach(button => {
 
-    SUBJECTS.forEach((subject) => {
-      const option = document.createElement("option");
+    button.addEventListener(
+      "click",
+      () => {
 
-      option.value = subject.id;
-      option.textContent =
-        `${subject.code} — ${subject.name}`;
+        const section =
+          button.dataset.section;
 
-      select.appendChild(option);
-    });
+        if (!section) {
+          return;
+        }
 
-    if (currentValue) {
-      select.value = currentValue;
-    }
+        navigateTo(section);
+      }
+    );
   });
+}
 
-  const weekSelect = byId("materialWeek");
 
-  if (weekSelect) {
-    weekSelect.innerHTML =
-      `<option value="">All / General</option>`;
+function navigateTo(section) {
 
-    for (let week = 1; week <= TOTAL_WEEKS; week++) {
-      const option =
-        document.createElement("option");
+  if (
+    section === "admin" &&
+    currentUser &&
+    !isAdmin()
+  ) {
+    showToast(
+      "Admin login is required.",
+      "error"
+    );
 
-      option.value = String(week);
-      option.textContent = `Week 
+  
