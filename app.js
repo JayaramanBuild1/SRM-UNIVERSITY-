@@ -1,1105 +1,1363 @@
-/* =========================================================
-   SRM BBA STUDENT PORTAL
-   VERSION 3
-   Main Application JavaScript
-========================================================= */
-
 "use strict";
 
-/* =========================================================
-   APPLICATION CONFIGURATION
-========================================================= */
+/*
+  ============================================================
+  SRM BBA STUDENT PORTAL
+  VERSION 4.0
+  ============================================================
 
-const APP_CONFIG = {
-    version: "3.0",
+  Frontend demonstration portal.
 
-    programme: "SRM BBA",
+  Important:
+  Authentication credentials are stored in frontend
+  JavaScript for demonstration only.
 
-    academicPeriod: "2026–2029",
+  This is NOT production-grade authentication.
+*/
 
-    officialSRMLogin:
-        "https://sp.srmist.edu.in/srmiststudentportal/students/loginManager/youLogin.jsp",
 
-    totalWeeksPerCourse: 15,
+const CONFIG = {
 
-    maxMaterialSize: 15 * 1024 * 1024,
+  version: "4.0",
 
-    storageKey: "srm_bba_portal_v3",
+  storageKey: "srm_bba_portal_v4",
 
-    loginKey: "srm_bba_login_v3",
+  loginKey: "srm_bba_login_v4",
 
-    themeKey: "srm_bba_theme_v3",
+  themeKey: "srm_bba_theme_v4",
 
-    sidebarKey: "srm_bba_sidebar_v3",
+  sidebarKey: "srm_bba_sidebar_v4",
 
-    sessionKey: "srm_bba_session_v3"
+  maxMaterialSize: 15 * 1024 * 1024,
+
+  officialSRM:
+    "https://sp.srmist.edu.in/srmiststudentportal/students/loginManager/youLogin.jsp"
+
 };
 
 
-/* =========================================================
-   DEMO LOGIN CONFIGURATION
-   ---------------------------------------------------------
-   Frontend demo credentials are not secure authentication.
-========================================================= */
+/* ============================================================
+   DEMO LOGIN
+   ============================================================ */
 
-const LOGIN_CREDENTIALS = {
-    student: {
-        username: "js3513",
-        password: "Raman@7917",
-        name: "S Jayaraman",
-        role: "BBA Student"
-    },
+const CREDENTIALS = {
 
-    admin: {
-        username: "Admin",
-        password: "Admin@SRM",
-        name: "SRM BBA Admin",
-        role: "Administrator"
-    }
+  student: {
+    username: "js3513",
+    password: "Raman@7917",
+    name: "S Jayaraman",
+    role: "BBA Student"
+  },
+
+  admin: {
+    username: "Admin",
+    password: "Admin@SRM",
+    name: "SRM BBA Admin",
+    role: "Administrator"
+  }
+
 };
 
 
-/* =========================================================
+/* ============================================================
    SUBJECTS
-========================================================= */
+   ============================================================ */
 
 const SUBJECTS = [
-    {
-        id: "management-science",
-        name: "Management Science",
-        code: "V26UBA101",
-        icon: "📊"
-    },
 
-    {
-        id: "production-operations",
-        name: "Production & Operations Management",
-        code: "V26UBA102",
-        icon: "⚙️"
-    },
+  {
+    id: "management-science",
+    name: "Management Science",
+    short: "Management Science"
+  },
 
-    {
-        id: "marketing-management",
-        name: "Marketing Management",
-        code: "V26UBA103",
-        icon: "📣"
-    },
+  {
+    id: "production-operations",
+    name: "Production & Operations Management",
+    short: "Production & Operations"
+  },
 
-    {
-        id: "professional-communication",
-        name: "Professional Communication",
-        code: "V26UBA104",
-        icon: "💬"
-    },
+  {
+    id: "marketing-management",
+    name: "Marketing Management",
+    short: "Marketing Management"
+  },
 
-    {
-        id: "health-wellness",
-        name: "Health & Wellness",
-        code: "V26UBA105",
-        icon: "❤️"
-    },
+  {
+    id: "professional-communication",
+    name: "Professional Communication",
+    short: "Professional Communication"
+  },
 
-    {
-        id: "foundation-ai-ml",
-        name: "Foundation of AI-ML",
-        code: "V26UBA106",
-        icon: "🤖"
-    },
+  {
+    id: "health-wellness",
+    name: "Health & Wellness",
+    short: "Health & Wellness"
+  },
 
-    {
-        id: "environmental-studies",
-        name: "Environmental Studies",
-        code: "V26UBA107",
-        icon: "🌱"
-    }
+  {
+    id: "foundation-ai",
+    name: "Foundation of AI-ML",
+    short: "Foundation of AI-ML"
+  },
+
+  {
+    id: "environmental-studies",
+    name: "Environmental Studies",
+    short: "Environmental Studies"
+  }
+
 ];
 
 
-/* =========================================================
-   DEMO LIVE CLASSES
-========================================================= */
+/* ============================================================
+   DEFAULT CLASSES
+   ============================================================ */
 
-const DEFAULT_CLASSES = [
+function createDefaultClasses() {
+
+  const now = new Date();
+
+  const tomorrow = new Date(now);
+
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  tomorrow.setHours(18, 0, 0, 0);
+
+
+  const dayAfter = new Date(now);
+
+  dayAfter.setDate(dayAfter.getDate() + 2);
+
+  dayAfter.setHours(20, 0, 0, 0);
+
+
+  const third = new Date(now);
+
+  third.setDate(third.getDate() + 4);
+
+  third.setHours(19, 0, 0, 0);
+
+
+  return [
+
     {
-        id: "class-1",
-        subject: "Professional Communication",
-        dateTime: "2026-09-17T18:00",
-        zoomLink: "https://zoom.us/",
-        createdAt: Date.now()
+      id: "class-1",
+      subject: "Professional Communication",
+      start: tomorrow.toISOString(),
+      end: new Date(
+        tomorrow.getTime() + 60 * 60 * 1000
+      ).toISOString(),
+      zoom: "https://zoom.us/"
     },
 
     {
-        id: "class-2",
-        subject: "Marketing Management",
-        dateTime: "2026-09-18T18:00",
-        zoomLink: "https://zoom.us/",
-        createdAt: Date.now()
+      id: "class-2",
+      subject: "Marketing Management",
+      start: dayAfter.toISOString(),
+      end: new Date(
+        dayAfter.getTime() + 60 * 60 * 1000
+      ).toISOString(),
+      zoom: "https://zoom.us/"
     },
 
     {
-        id: "class-3",
-        subject: "Management Science",
-        dateTime: "2026-09-19T18:00",
-        zoomLink: "https://zoom.us/",
-        createdAt: Date.now()
+      id: "class-3",
+      subject: "Management Science",
+      start: third.toISOString(),
+      end: new Date(
+        third.getTime() + 60 * 60 * 1000
+      ).toISOString(),
+      zoom: "https://zoom.us/"
     }
-];
+
+  ];
+
+}
 
 
-/* =========================================================
+/* ============================================================
    DEFAULT ANNOUNCEMENTS
-========================================================= */
+   ============================================================ */
 
 const DEFAULT_ANNOUNCEMENTS = [
-    {
-        id: "announcement-1",
 
-        title: "Welcome to SRM BBA Portal",
+  {
+    id: "announcement-1",
+    title: "Welcome to SRM BBA Portal",
+    message:
+      "Your Version 4 academic dashboard is ready.",
+    priority: "Normal",
+    date: new Date().toISOString()
+  },
 
-        message:
-            "Use this dashboard to manage courses, weekly progress, classes and study materials.",
+  {
+    id: "announcement-2",
+    title: "Weekly Progress",
+    message:
+      "Use Weekly Progress to track Week 1 through Week 15 for every subject.",
+    priority: "Important",
+    date: new Date().toISOString()
+  }
 
-        createdAt: Date.now()
-    },
-
-    {
-        id: "announcement-2",
-
-        title: "Weekly Progress",
-
-        message:
-            "Click a week once to mark it In Process and double-click the same week to mark it Complete.",
-
-        createdAt: Date.now()
-    }
 ];
 
 
-/* =========================================================
+/* ============================================================
    DEFAULT ASSIGNMENTS
-========================================================= */
+   ============================================================ */
 
 const DEFAULT_ASSIGNMENTS = [
-    {
-        id: "assignment-1",
-        subject: "Environmental Studies",
-        title: "Weekly Assignment",
-        type: "Assignment",
-        status: "Pending"
-    },
 
-    {
-        id: "assignment-2",
-        subject: "Marketing Management",
-        title: "Learning Activity Question",
-        type: "LAQ",
-        status: "Pending"
-    },
+  {
+    subject: "Management Science",
+    type: "Assignment",
+    title: "Weekly Academic Activity",
+    status: "Pending"
+  },
 
-    {
-        id: "assignment-3",
-        subject: "Production & Operations Management",
-        title: "Discussion Activity",
-        type: "Discussion",
-        status: "Pending"
-    },
+  {
+    subject: "Marketing Management",
+    type: "LAQ",
+    title: "Weekly Long Answer",
+    status: "Pending"
+  },
 
-    {
-        id: "assignment-4",
-        subject: "Foundation of AI-ML",
-        title: "Extended Learning Question",
-        type: "ELQ",
-        status: "Pending"
-    }
+  {
+    subject: "Professional Communication",
+    type: "Discussion",
+    title: "Discussion Activity",
+    status: "Pending"
+  },
+
+  {
+    subject: "Foundation of AI-ML",
+    type: "ELQ",
+    title: "Extended Learning Question",
+    status: "Pending"
+  },
+
+  {
+    subject: "Environmental Studies",
+    type: "MCQ",
+    title: "Weekly MCQ",
+    status: "Pending"
+  }
+
 ];
 
 
-/* =========================================================
+/* ============================================================
    DEFAULT CALENDAR
-========================================================= */
+   ============================================================ */
 
 const DEFAULT_CALENDAR = [
-    {
-        date: "2026-09-19",
-        title: "Academic Task Deadline",
-        description:
-            "Complete available assignments and academic activities."
-    },
 
-    {
-        date: "2026-09-24",
-        title: "Revision Planning",
-        description:
-            "Revision schedule can be followed after travel period."
-    },
+  {
+    date: "Academic",
+    title: "Weekly Course Progress",
+    description: "Complete weekly learning activities."
+  },
 
-    {
-        date: "2026-10-01",
-        title: "Monthly Academic Review",
-        description:
-            "Review weekly course progress and pending activities."
-    }
+  {
+    date: "Ongoing",
+    title: "Live Classes",
+    description: "Check the Live Classes timeline regularly."
+  },
+
+  {
+    date: "Important",
+    title: "Assignments",
+    description: "Complete assigned academic activities before their deadlines."
+  }
+
 ];
 
 
-/* =========================================================
+/* ============================================================
    STATE
-========================================================= */
+   ============================================================ */
 
-let portalState = createDefaultState();
+let state = {
 
-let currentUser = null;
+  progress: {},
 
-let countdownInterval = null;
+  classes: createDefaultClasses(),
+
+  announcements: DEFAULT_ANNOUNCEMENTS,
+
+  assignments: DEFAULT_ASSIGNMENTS,
+
+  materials: [],
+
+  audit: [],
+
+  sessionStart: null,
+
+  breakStart: null
+
+};
+
+
+let loginState = null;
+
+let nextClass = null;
 
 let sessionInterval = null;
 
+let countdownInterval = null;
+
 let breakInterval = null;
 
-let toastTimeout = null;
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+
+function $(id) {
+
+  return document.getElementById(id);
+
+}
 
 
-/* =========================================================
-   DEFAULT STATE
-========================================================= */
+function all(selector) {
 
-function createDefaultState() {
+  return Array.from(
+    document.querySelectorAll(selector)
+  );
 
-    const progress = {};
+}
 
-    SUBJECTS.forEach(subject => {
 
-        progress[subject.id] =
-            Array(APP_CONFIG.totalWeeksPerCourse).fill("not-started");
+function safeJSONParse(value, fallback) {
+
+  try {
+
+    return JSON.parse(value);
+
+  } catch {
+
+    return fallback;
+
+  }
+
+}
+
+
+function saveState() {
+
+  localStorage.setItem(
+    CONFIG.storageKey,
+    JSON.stringify(state)
+  );
+
+}
+
+
+function loadState() {
+
+  const saved = localStorage.getItem(
+    CONFIG.storageKey
+  );
+
+  if (!saved) {
+
+    return;
+
+  }
+
+  const parsed = safeJSONParse(
+    saved,
+    null
+  );
+
+  if (!parsed) {
+
+    return;
+
+  }
+
+  state = {
+
+    ...state,
+
+    ...parsed
+
+  };
+
+}
+
+
+function saveLogin() {
+
+  localStorage.setItem(
+    CONFIG.loginKey,
+    JSON.stringify(loginState)
+  );
+
+}
+
+
+function loadLogin() {
+
+  const saved = localStorage.getItem(
+    CONFIG.loginKey
+  );
+
+  if (!saved) {
+
+    return;
+
+  }
+
+  loginState = safeJSONParse(
+    saved,
+    null
+  );
+
+}
+
+
+function formatDate(date) {
+
+  return new Intl.DateTimeFormat(
+    "en-IN",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    }
+  ).format(date);
+
+}
+
+
+function formatTime(date) {
+
+  return new Intl.DateTimeFormat(
+    "en-IN",
+    {
+      hour: "2-digit",
+      minute: "2-digit"
+    }
+  ).format(date);
+
+}
+
+
+function formatDateTime(date) {
+
+  return `${formatDate(date)} • ${formatTime(date)}`;
+
+}
+
+
+function showToast(message) {
+
+  const toast = $("toast");
+
+  toast.textContent = message;
+
+  toast.classList.add("show");
+
+  setTimeout(() => {
+
+    toast.classList.remove("show");
+
+  }, 2500);
+
+}
+
+
+function addAudit(message) {
+
+  state.audit.unshift({
+
+    message,
+
+    date: new Date().toISOString()
+
+  });
+
+  state.audit =
+    state.audit.slice(0, 30);
+
+  saveState();
+
+  renderAudit();
+
+}
+
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+
+function navigate(sectionId) {
+
+  const pages = all(".page");
+
+  pages.forEach(page => {
+
+    page.classList.remove("active");
+
+  });
+
+
+  const target = $(sectionId);
+
+  if (!target) {
+
+    return;
+
+  }
+
+  target.classList.add("active");
+
+
+  all(".nav-item[data-section]")
+    .forEach(button => {
+
+      button.classList.toggle(
+        "active",
+        button.dataset.section === sectionId
+      );
 
     });
 
 
-    return {
-
-        progress,
-
-        classes: DEFAULT_CLASSES.map(item => ({
-            ...item
-        })),
-
-        announcements: DEFAULT_ANNOUNCEMENTS.map(item => ({
-            ...item
-        })),
-
-        assignments: DEFAULT_ASSIGNMENTS.map(item => ({
-            ...item
-        })),
-
-        calendar: DEFAULT_CALENDAR.map(item => ({
-            ...item
-        })),
-
-        materials: [],
-
-        audit: [],
-
-        adminMinimized: false
-    };
-}
-
-
-/* =========================================================
-   DOM HELPERS
-========================================================= */
-
-function $(selector) {
-    return document.querySelector(selector);
-}
-
-
-function $all(selector) {
-    return Array.from(document.querySelectorAll(selector));
-}
-
-
-/* =========================================================
-   INITIALIZATION
-========================================================= */
-
-document.addEventListener("DOMContentLoaded", () => {
-
-    initializeApplication();
-
-});
-
-
-function initializeApplication() {
-
-    loadPortalState();
-
-    loadTheme();
-
-    loadSidebarState();
-
-    bindGlobalEvents();
-
-    renderDashboard();
-
-    renderCourses();
-
-    renderProgress();
-
-    renderLiveClasses();
-
-    renderAssignments();
-
-    renderMaterials();
-
-    renderCalendar();
-
-    renderAnnouncements();
-
-    renderAnalytics();
-
-    renderProfile();
-
-    renderAdmin();
-
-    updateCurrentDate();
-
-    updateHeaderUser();
-
-    updateStudentStatus();
-
-    startCountdown();
-
-    startSessionClock();
-
-    startBreakClock();
-
-}
-
-
-/* =========================================================
-   GLOBAL EVENT BINDINGS
-========================================================= */
-
-function bindGlobalEvents() {
-
-    /* -----------------------------------------
-       LOGIN OPEN
-    ----------------------------------------- */
-
-    const openLoginButton = $("#openLoginButton");
-
-    if (openLoginButton) {
-
-        openLoginButton.addEventListener(
-            "click",
-            openLoginModal
-        );
-
-    }
-
-
-    /* -----------------------------------------
-       LOGIN CLOSE
-    ----------------------------------------- */
-
-    const closeLoginButton = $("#closeLoginButton");
-
-    if (closeLoginButton) {
-
-        closeLoginButton.addEventListener(
-            "click",
-            closeLoginModal
-        );
-
-    }
-
-
-    const loginOverlay = $("#loginOverlay");
-
-    if (loginOverlay) {
-
-        loginOverlay.addEventListener(
-            "click",
-            closeLoginModal
-        );
-
-    }
-
-
-    /* -----------------------------------------
-       ESCAPE CLOSES LOGIN
-    ----------------------------------------- */
-
-    document.addEventListener("keydown", event => {
-
-        if (
-            event.key === "Escape" &&
-            isLoginModalOpen()
-        ) {
-
-            closeLoginModal();
-
-        }
-
-    });
-
-
-    /* -----------------------------------------
-       LOGIN ROLE BUTTONS
-    ----------------------------------------- */
-
-    $all("[data-login-role]").forEach(button => {
-
-        button.addEventListener(
-            "click",
-            () => {
-
-                switchLoginRole(
-                    button.dataset.loginRole
-                );
-
-            }
-        );
-
-    });
-
-
-    /* -----------------------------------------
-       STUDENT LOGIN
-    ----------------------------------------- */
-
-    const studentLoginForm =
-        $("#studentLoginForm");
-
-    if (studentLoginForm) {
-
-        studentLoginForm.addEventListener(
-            "submit",
-            event => {
-
-                event.preventDefault();
-
-                handleLogin(
-                    "student",
-                    studentLoginForm
-                );
-
-            }
-        );
-
-    }
-
-
-    /* -----------------------------------------
-       ADMIN LOGIN
-    ----------------------------------------- */
-
-    const adminLoginForm =
-        $("#adminLoginForm");
-
-    if (adminLoginForm) {
-
-        adminLoginForm.addEventListener(
-            "submit",
-            event => {
-
-                event.preventDefault();
-
-                handleLogin(
-                    "admin",
-                    adminLoginForm
-                );
-
-            }
-        );
-
-    }
-
-
-    /* -----------------------------------------
-       LOGOUT
-    ----------------------------------------- */
-
-    const logoutButton =
-        $("#logoutButton");
-
-    if (logoutButton) {
-
-        logoutButton.addEventListener(
-            "click",
-            logout
-        );
-
-    }
-
-
-    /* -----------------------------------------
-       SIDEBAR
-    ----------------------------------------- */
-
-    const sidebarToggle =
-        $("#sidebarToggle");
-
-    if (sidebarToggle) {
-
-        sidebarToggle.addEventListener(
-            "click",
-            toggleSidebar
-        );
-
-    }
-
-
-    const sidebarBackdrop =
-        $("#sidebarBackdrop");
-
-    if (sidebarBackdrop) {
-
-        sidebarBackdrop.addEventListener(
-            "click",
-            closeMobileSidebar
-        );
-
-    }
-
-
-    /* -----------------------------------------
-       NAVIGATION
-    ----------------------------------------- */
-
-    $all("[data-section]").forEach(button => {
-
-        button.addEventListener(
-            "click",
-            event => {
-
-                const section =
-                    event.currentTarget.dataset.section;
-
-                if (section) {
-
-                    navigateTo(section);
-
-                }
-
-            }
-        );
-
-    });
-
-
-    /* -----------------------------------------
-       THEME
-    ----------------------------------------- */
-
-    const themeToggle =
-        $("#themeToggle");
-
-    if (themeToggle) {
-
-        themeToggle.addEventListener(
-            "click",
-            toggleTheme
-        );
-
-    }
-
-
-    /* -----------------------------------------
-       BREAK
-    ----------------------------------------- */
-
-    const breakButton =
-        $("#breakButton");
-
-    if (breakButton) {
-
-        breakButton.addEventListener(
-            "click",
-            toggleBreak
-        );
-
-    }
-
-
-    /* -----------------------------------------
-       JOIN CLASS
-    ----------------------------------------- */
-
-    const joinNextClassButton =
-        $("#joinNextClassButton");
-
-    if (joinNextClassButton) {
-
-        joinNextClassButton.addEventListener(
-            "click",
-            joinNextClass
-        );
-
-    }
-
-
-    /* -----------------------------------------
-       OFFICIAL SRM
-    ----------------------------------------- */
-
-    const officialSRMButton =
-        $("#officialSRMButton");
-
-    if (officialSRMButton) {
-
-        officialSRMButton.addEventListener(
-            "click",
-            () => {
-
-                window.open(
-                    APP_CONFIG.officialSRMLogin,
-                    "_blank",
-                    "noopener,noreferrer"
-                );
-
-            }
-        );
-
-    }
-
-
-    /* -----------------------------------------
-       ADMIN BANNER
-    ----------------------------------------- */
-
-    const adminMinimizeButton =
-        $("#adminMinimizeButton");
-
-    if (adminMinimizeButton) {
-
-        adminMinimizeButton.addEventListener(
-            "click",
-            toggleAdminBanner
-        );
-
-    }
-
-
-    /* -----------------------------------------
-       ADMIN CLASS FORM
-    ----------------------------------------- */
-
-    const classForm =
-        $("#classForm");
-
-    if (classForm) {
-
-        classForm.addEventListener(
-            "submit",
-            handleClassSubmit
-        );
-
-    }
-
-
-    /* -----------------------------------------
-       ANNOUNCEMENT FORM
-    ----------------------------------------- */
-
-    const announcementForm =
-        $("#announcementForm");
-
-    if (announcementForm) {
-
-        announcementForm.addEventListener(
-            "submit",
-            handleAnnouncementSubmit
-        );
-
-    }
-
-
-    /* -----------------------------------------
-       MATERIAL FORM
-    ----------------------------------------- */
-
-    const materialForm =
-        $("#materialForm");
-
-    if (materialForm) {
-
-        materialForm.addEventListener(
-            "submit",
-            handleMaterialSubmit
-        );
-
-    }
-
-
-    /* -----------------------------------------
-       EXPORT
-    ----------------------------------------- */
-
-    const exportDataButton =
-        $("#exportDataButton");
-
-    if (exportDataButton) {
-
-        exportDataButton.addEventListener(
-            "click",
-            exportPortalData
-        );
-
-    }
-
-
-    /* -----------------------------------------
-       IMPORT
-    ----------------------------------------- */
-
-    const importDataButton =
-        $("#importDataButton");
-
-    const importDataFile =
-        $("#importDataFile");
-
-    if (
-        importDataButton &&
-        importDataFile
-    ) {
-
-        importDataButton.addEventListener(
-            "click",
-            () => importDataFile.click()
-        );
-
-
-        importDataFile.addEventListener(
-            "change",
-            handleImportData
-        );
-
-    }
-
-
-    /* -----------------------------------------
-       RESET
-    ----------------------------------------- */
-
-    const resetDataButton =
-        $("#resetDataButton");
-
-    if (resetDataButton) {
-
-        resetDataButton.addEventListener(
-            "click",
-            resetPortalData
-        );
-
-    }
-
-
-    /* -----------------------------------------
-       RESIZE
-    ----------------------------------------- */
-
-    window.addEventListener(
-        "resize",
-        handleWindowResize
-    );
-
-}
-
-
-/* =========================================================
-   LOGIN MODAL
-========================================================= */
-
-function openLoginModal() {
-
-    const modal = $("#loginModal");
-
-    if (!modal) {
-        return;
-    }
-
-    modal.hidden = false;
-
-    modal.setAttribute(
-        "aria-hidden",
-        "false"
-    );
-
-    document.body.classList.add(
-        "login-open"
-    );
-
-
-    switchLoginRole("student");
-
-
-    const username =
-        $("#studentUsername");
-
-    if (username) {
-
-        setTimeout(() => {
-
-            username.focus();
-
-        }, 100);
-
-    }
-
-}
-
-
-function closeLoginModal() {
-
-    const modal = $("#loginModal");
-
-    if (!modal) {
-        return;
-    }
-
-    modal.hidden = true;
-
-    modal.setAttribute(
-        "aria-hidden",
-        "true"
-    );
+  if (window.innerWidth <= 800) {
 
     document.body.classList.remove(
-        "login-open"
+      "mobile-sidebar-open"
     );
+
+    $("sidebarBackdrop")
+      .classList.add("hidden");
+
+  }
+
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
 
 }
 
 
-function isLoginModalOpen() {
+/* ============================================================
+   LOGIN MODAL
+   ============================================================ */
 
-    const modal = $("#loginModal");
+function openLogin() {
 
-    return modal &&
-        !modal.hidden;
+  $("loginModal")
+    .classList.remove("hidden");
 
-}
+  clearLoginMessages();
 
+  setLoginRole("student");
 
-/* =========================================================
-   LOGIN ROLE SWITCH
-========================================================= */
+  setTimeout(() => {
 
-function switchLoginRole(role) {
+    $("studentUsername").focus();
 
-    if (
-        role !== "student" &&
-        role !== "admin"
-    ) {
-
-        role = "student";
-
-    }
-
-
-    $all("[data-login-role]").forEach(button => {
-
-        button.classList.toggle(
-            "active",
-            button.dataset.loginRole === role
-        );
-
-    });
-
-
-    $all("[data-login-form]").forEach(form => {
-
-        const isCurrent =
-            form.dataset.loginForm === role;
-
-        form.hidden = !isCurrent;
-
-        form.classList.toggle(
-            "active",
-            isCurrent
-        );
-
-    });
-
-
-    clearLoginMessages();
+  }, 50);
 
 }
 
 
-/* =========================================================
-   LOGIN
-========================================================= */
+function closeLogin() {
 
-function handleLogin(role, form) {
-
-    const usernameInput =
-        form.querySelector(
-            'input[name="username"]'
-        );
-
-    const passwordInput =
-        form.querySelector(
-            'input[name="password"]'
-        );
-
-
-    if (
-        !usernameInput ||
-        !passwordInput
-    ) {
-
-        return;
-
-    }
-
-
-    const username =
-        usernameInput.value.trim();
-
-    const password =
-        passwordInput.value;
-
-
-    const credentials =
-        LOGIN_CREDENTIALS[role];
-
-
-    if (!credentials) {
-
-        showLoginMessage(
-            role,
-            "Login configuration unavailable."
-        );
-
-        return;
-
-    }
-
-
-    if (
-        username !== credentials.username ||
-        password !== credentials.password
-    ) {
-
-        showLoginMessage(
-            role,
-            "Incorrect username or password."
-        );
-
-        return;
-
-    }
-
-
-    currentUser = {
-
-        role,
-
-        username: credentials.username,
-
-        name: credentials.name,
-
-        displayRole: credentials.role
-
-    };
-
-
-    saveLoginSession();
-
-    startStudentSession();
-
-    addAudit(
-        `${credentials.role} logged in`
-    );
-
-
-    updateHeaderUser();
-
-    updateStudentStatus();
-
-    updateAdminVisibility();
-
-
-    closeLoginModal();
-
-
-    showToast(
-        `Welcome, ${credentials.name}`
-    );
-
-
-    renderAdmin();
-
-
-    /* -----------------------------------------
-       ADMIN LOGIN
-    ----------------------------------------- */
-
-    if (role === "admin") {
-
-        navigateTo("admin");
-
-    } else {
-
-        navigateTo("dashboard");
-
-    }
-
-}
-
-
-/* =========================================================
-   LOGIN MESSAGES
-========================================================= */
-
-function showLoginMessage(
-    role,
-    message,
-    success = false
-) {
-
-    const element =
-        document.querySelector(
-            `[data-login-message="${role}"]`
-        );
-
-
-    if (!element) {
-        return;
-    }
-
-
-    element.textContent = message;
-
-    element.classList.toggle(
-        "success",
-        success
-    );
+  $("loginModal")
+    .classList.add("hidden");
 
 }
 
 
 function clearLoginMessages() {
 
-    $all(".login-message").forEach(
-        element => {
+  $("studentLoginMessage").textContent = "";
 
-            element.textContent = "";
+  $("studentLoginMessage")
+    .className = "login-message";
 
-            element.classList.remove(
-                "success"
-            );
 
-        }
-    );
+  $("adminLoginMessage").textContent = "";
+
+  $("adminLoginMessage")
+    .className = "login-message";
 
 }
 
 
-/* =========================================================
-   LOGIN SESSION
-========================================================= */
+function setLoginRole(role) {
 
-function save
+  all(".login-tab")
+    .forEach(tab => {
+
+      const active =
+        tab.dataset.role === role;
+
+      tab.classList.toggle(
+        "active",
+        active
+      );
+
+    });
+
+
+  all(".login-form")
+    .forEach(form => {
+
+      const active =
+        form.dataset.formRole === role;
+
+      form.classList.toggle(
+        "active",
+        active
+      );
+
+      form.hidden = !active;
+
+    });
+
+
+  clearLoginMessages();
+
+}
+
+
+function showLoginMessage(
+  role,
+  message,
+  type
+) {
+
+  const element =
+    role === "student"
+      ? $("studentLoginMessage")
+      : $("adminLoginMessage");
+
+
+  element.textContent = message;
+
+  element.className =
+    `login-message ${type}`;
+
+}
+
+
+function handleLogin(role, form) {
+
+  const username =
+    form.elements.username.value.trim();
+
+  const password =
+    form.elements.password.value;
+
+
+  const account =
+    CREDENTIALS[role];
+
+
+  if (
+    username !== account.username ||
+    password !== account.password
+  ) {
+
+    showLoginMessage(
+      role,
+      "Incorrect username or password.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  loginState = {
+
+    role,
+
+    username,
+
+    name: account.name,
+
+    roleName: account.role,
+
+    loggedInAt: new Date().toISOString()
+
+  };
+
+
+  saveLogin();
+
+
+  state.sessionStart =
+    new Date().toISOString();
+
+  saveState();
+
+
+  addAudit(
+    `${account.role} logged in`
+  );
+
+
+  closeLogin();
+
+  updateUserInterface();
+
+  startSessionTimer();
+
+  navigate("dashboard");
+
+  showToast(
+    `Welcome, ${account.name}`
+  );
+
+}
+
+
+/* ============================================================
+   USER UI
+   ============================================================ */
+
+function updateUserInterface() {
+
+  const loggedIn =
+    Boolean(loginState);
+
+
+  $("guestStatus")
+    .classList.toggle(
+      "hidden",
+      loggedIn
+    );
+
+
+  $("studentStatus")
+    .classList.toggle(
+      "hidden",
+      !loggedIn ||
+      loginState.role !== "student"
+    );
+
+
+  $("adminStatus")
+    .classList.toggle(
+      "hidden",
+      !loggedIn ||
+      loginState.role !== "admin"
+    );
+
+
+  $("loginButton")
+    .classList.toggle(
+      "hidden",
+      loggedIn
+    );
+
+
+  $("logoutButton")
+    .classList.toggle(
+      "hidden",
+      !loggedIn
+    );
+
+
+  const admin =
+    loggedIn &&
+    loginState.role === "admin";
+
+
+  all(".admin-only")
+    .forEach(element => {
+
+      element.classList.toggle(
+        "hidden",
+        !admin
+      );
+
+    });
+
+
+  if (
+    !admin &&
+    $("admin").classList.contains("active")
+  ) {
+
+    navigate("dashboard");
+
+  }
+
+
+  if (loggedIn) {
+
+    $("welcomeTitle").textContent =
+      `Welcome back, ${loginState.name}`;
+
+    $("welcomeText").textContent =
+      loginState.role === "admin"
+        ? "Administrator control and academic management dashboard."
+        : "Your academic home dashboard.";
+
+    $("profileName").textContent =
+      loginState.name;
+
+    $("profileStatus").textContent =
+      loginState.roleName;
+
+  } else {
+
+    $("welcomeTitle").textContent =
+      "Welcome to your dashboard";
+
+    $("welcomeText").textContent =
+      "Your academic home dashboard.";
+
+    $("profileStatus").textContent =
+      "Guest";
+
+  }
+
+
+  updateActivityStatus();
+
+}
+
+
+function logout() {
+
+  if (!loginState) {
+
+    return;
+
+  }
+
+
+  addAudit(
+    `${loginState.roleName} logged out`
+  );
+
+
+  loginState = null;
+
+  localStorage.removeItem(
+    CONFIG.loginKey
+  );
+
+
+  state.sessionStart = null;
+
+  saveState();
+
+
+  stopSessionTimer();
+
+  updateUserInterface();
+
+  navigate("dashboard");
+
+  showToast("Logged out successfully.");
+
+}
+
+
+/* ============================================================
+   SESSION
+   ============================================================ */
+
+function startSessionTimer() {
+
+  stopSessionTimer();
+
+
+  if (!state.sessionStart) {
+
+    return;
+
+  }
+
+
+  sessionInterval =
+    setInterval(
+      updateSessionTimer,
+      1000
+    );
+
+
+  updateSessionTimer();
+
+}
+
+
+function stopSessionTimer() {
+
+  if (sessionInterval) {
+
+    clearInterval(sessionInterval);
+
+    sessionInterval = null;
+
+  }
+
+}
+
+
+function updateSessionTimer() {
+
+  if (!state.sessionStart) {
+
+    $("sessionTimer").textContent =
+      "00:00:00";
+
+    return;
+
+  }
+
+
+  const elapsed =
+    Math.max(
+      0,
+      Date.now() -
+      new Date(state.sessionStart).getTime()
+    );
+
+
+  $("sessionTimer").textContent =
+    durationClock(elapsed);
+
+}
+
+
+function durationClock(milliseconds) {
+
+  const total =
+    Math.floor(milliseconds / 1000);
+
+  const hours =
+    Math.floor(total / 3600);
+
+  const minutes =
+    Math.floor(
+      (total % 3600) / 60
+    );
+
+  const seconds =
+    total % 60;
+
+
+  return [
+    hours,
+    minutes,
+    seconds
+  ]
+    .map(number =>
+      String(number).padStart(2, "0")
+    )
+    .join(":");
+
+}
+
+
+function updateActivityStatus() {
+
+  const online =
+    Boolean(loginState);
+
+
+  $("activityBadge").textContent =
+    online
+      ? "ONLINE"
+      : "OFFLINE";
+
+
+  $("activityBadge")
+    .className =
+      `badge ${online ? "green" : "red"}`;
+
+}
+
+
+/* ============================================================
+   BREAK TIMER
+   ============================================================ */
+
+function startBreak() {
+
+  if (state.breakStart) {
+
+    return;
+
+  }
+
+
+  state.breakStart =
+    new Date().toISOString();
+
+  saveState();
+
+
+  breakInterval =
+    setInterval(
+      updateBreakTimer,
+      1000
+    );
+
+
+  updateBreakTimer();
+
+  $("breakButton").textContent =
+    "End Break";
+
+
+  showToast(
+    "15-minute break started."
+  );
+
+}
+
+
+function endBreak() {
+
+  state.breakStart = null;
+
+  saveState();
+
+
+  if (breakInterval) {
+
+    clearInterval(breakInterval);
+
+    breakInterval = null;
+
+  }
+
+
+  $("breakTimer").textContent =
+    "15:00";
+
+  $("breakButton").textContent =
+    "Start Break";
+
+  showToast(
+    "Break ended."
+  );
+
+}
+
+
+function updateBreakTimer() {
+
+  if (!state.breakStart) {
+
+    return;
+
+  }
+
+
+  const elapsed =
+    Math.floor(
+      (
+        Date.now() -
+        new Date(state.breakStart).getTime()
+      ) / 1000
+    );
+
+
+  const remaining =
+    Math.max(
+      0,
+      900 - elapsed
+    );
+
+
+  const minutes =
+    Math.floor(
+      remaining / 60
+    );
+
+  const seconds =
+    remaining % 60;
+
+
+  $("breakTimer").textContent =
+    `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
+
+  if (remaining <= 0) {
+
+    endBreak();
+
+    showToast(
+      "Your 15-minute break has ended."
+    );
+
+  }
+
+}
+
+
+/* ============================================================
+   PROGRESS
+   ============================================================ */
+
+function ensureProgress() {
+
+  SUBJECTS.forEach(subject => {
+
+    if (!state.progress[subject.id]) {
+
+      state.progress[subject.id] =
+        Array(15).fill("not-started");
+
+    }
+
+  });
+
+  saveState();
+
+}
+
+
+function progressCounts(subjectId) {
+
+  const weeks =
+    state.progress[subjectId] ||
+    Array(15).fill("not-started");
+
+
+  return {
+
+    complete:
+      weeks.filter(
+        value => value === "complete"
+      ).length,
+
+    process:
+      weeks.filter(
+        value => value === "process"
+      ).length,
+
+    total: 15
+
+  };
+
+}
+
+
+function subjectPercent(subjectId) {
+
+  const counts =
+    progressCounts(subjectId);
+
+
+  return Math.round(
+    (counts.complete / 15) * 100
+  );
+
+}
+
+
+function overallStats() {
+
+  let complete = 0;
+
+  let process = 0;
+
+
+  SUBJECTS.forEach(subject => {
+
+    const counts =
+      progressCounts(subject.id);
+
+    complete += counts.complete;
+
+    process += counts.process;
+
+  });
+
+
+  const total =
+    SUBJECTS.length * 15;
+
+
+  return {
+
+    complete,
+
+    process,
+
+    total,
+
+    percent:
+      Math.round(
+        (complete / total) * 100
+      )
+
+  };
+
+}
+
+
+/* ============================================================
+   RENDER COURSES
+   ============================================================ */
+
+function renderCourses() {
+
+  const grid =
+    $("coursesGrid");
+
+
+  grid.innerHTML =
+    SUBJECTS.map(subject => {
+
+      const percent =
+        subjectPercent(subject.id);
+
+
+      return `
+        <article class="course-card">
+
+          <div class="stat-icon">
+            📚
+          </div>
+
+          <h2>
+            ${escapeHTML(subject.name)}
+          </h2>
+
+          <p>
+            15-week academic progress tracker.
+          </p>
+
+          <div class="progress-track">
+            <div
+              class="progress-fill"
+              style="width:${percent}%"
+            ></div>
+          </div>
+
+          <div class="course-card-footer">
+            <span>Progress</span>
+            <strong>${percent}%</strong>
+          </div>
+
+        </article>
+      `;
+
+    }).join("");
+
+
+  renderDashboardCourses();
+
+}
+
+
+/* ============================================================
+   DASHBOARD COURSES
+   ============================================================ */
+
+function renderDashboardCourses() {
+
+  $("dashboardCourses").innerHTML =
+    SUBJECTS.map(subject => {
+
+      const percent =
+        subjectPercent(subject.id);
+
+
+      return `
+        <div class="course-row">
+
+          <div class="course-row-top">
+
+            <span class="course-row-name">
+              ${escapeHTML(subject.short)}
+            </span>
+
+            <span class="course-percent">
+              ${percent}%
+            </span>
+
+          </div>
+
+          <div class="progress-track">
+
+            <div
+              class="progress-fill"
+              style="width:${percent}%"
+            ></div>
+
+          </div>
+
+        </div>
+      `;
+
+    }).join("");
+
+}
+
+
+/* ============================================================
+   WEEKLY PROGRESS
+   ============================================================ */
+
+function renderProgress() {
+
+  const container =
+    $("progressContainer");
+
+
+  container.innerHTML =
+    SUBJECTS.map(subject => {
+
+      const weeks =
+        state.progress[subject.id];
+
+
+      return `
+        <article class="progress-card">
+
+          <h2>
+            ${escapeHTML(subject.name)}
+          </h2>
+
+          <div class="weeks">
+
+            ${weeks.map(
+              (status, index) => {
+
+                const className =
+                  status === "complete"
+                    ? "complete"
+                    : status === "process"
+                      ? "process"
+                      : "";
+
+
+                return `
+                  <button
+                    class="week ${className}"
+                    data-subject="${subject.id}"
+                    data-week="${index}"
+                    title="Click: In Process | Double-click: Complete"
+                    type="button"
+                  >
+                    W${index + 1}
+                  </button>
+                `;
+
+              }
+            ).join("")}
+
+          </div>
+
+          <button
+            class="button primary s
