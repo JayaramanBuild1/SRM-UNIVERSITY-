@@ -457,6 +457,8 @@ function showToast(message) {
 
   const toast = $("toast");
 
+  if (!toast) return;
+
   toast.textContent = message;
 
   toast.classList.add("show");
@@ -489,6 +491,18 @@ function addAudit(message) {
 
 }
 
+function escapeHTML(str) {
+  
+  if (!str) return "";
+  
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+}
 
 /* ============================================================
    NAVIGATION
@@ -533,8 +547,8 @@ function navigate(sectionId) {
       "mobile-sidebar-open"
     );
 
-    $("sidebarBackdrop")
-      .classList.add("hidden");
+    const backdrop = $("sidebarBackdrop");
+    if(backdrop) backdrop.classList.add("hidden");
 
   }
 
@@ -552,9 +566,11 @@ function navigate(sectionId) {
    ============================================================ */
 
 function openLogin() {
+  
+  const modal = $("loginModal");
+  if (!modal) return;
 
-  $("loginModal")
-    .classList.remove("hidden");
+  modal.classList.remove("hidden");
 
   clearLoginMessages();
 
@@ -562,7 +578,8 @@ function openLogin() {
 
   setTimeout(() => {
 
-    $("studentUsername").focus();
+    const userInp = $("studentUsername");
+    if(userInp) userInp.focus();
 
   }, 50);
 
@@ -571,25 +588,28 @@ function openLogin() {
 
 function closeLogin() {
 
-  $("loginModal")
-    .classList.add("hidden");
+  const modal = $("loginModal");
+  if (!modal) return;
+
+  modal.classList.add("hidden");
 
 }
 
 
 function clearLoginMessages() {
+  
+  const sMsg = $("studentLoginMessage");
+  const aMsg = $("adminLoginMessage");
 
-  $("studentLoginMessage").textContent = "";
+  if (sMsg) {
+    sMsg.textContent = "";
+    sMsg.className = "login-message";
+  }
 
-  $("studentLoginMessage")
-    .className = "login-message";
-
-
-  $("adminLoginMessage").textContent = "";
-
-  $("adminLoginMessage")
-    .className = "login-message";
-
+  if (aMsg) {
+    aMsg.textContent = "";
+    aMsg.className = "login-message";
+  }
 }
 
 
@@ -640,6 +660,8 @@ function showLoginMessage(
     role === "student"
       ? $("studentLoginMessage")
       : $("adminLoginMessage");
+      
+  if (!element) return;
 
 
   element.textContent = message;
@@ -733,41 +755,32 @@ function updateUserInterface() {
     Boolean(loginState);
 
 
-  $("guestStatus")
-    .classList.toggle(
-      "hidden",
-      loggedIn
-    );
+  const gStatus = $("guestStatus");
+  if(gStatus) gStatus.classList.toggle("hidden", loggedIn);
 
 
-  $("studentStatus")
-    .classList.toggle(
+  const sStatus = $("studentStatus");
+  if(sStatus) sStatus.classList.toggle(
       "hidden",
       !loggedIn ||
       loginState.role !== "student"
     );
 
 
-  $("adminStatus")
-    .classList.toggle(
+  const aStatus = $("adminStatus");
+  if(aStatus) aStatus.classList.toggle(
       "hidden",
       !loggedIn ||
       loginState.role !== "admin"
     );
 
 
-  $("loginButton")
-    .classList.toggle(
-      "hidden",
-      loggedIn
-    );
+  const lBtn = $("loginButton");
+  if(lBtn) lBtn.classList.toggle("hidden", loggedIn);
 
 
-  $("logoutButton")
-    .classList.toggle(
-      "hidden",
-      !loggedIn
-    );
+  const oBtn = $("logoutButton");
+  if (oBtn) oBtn.classList.toggle("hidden", !loggedIn);
 
 
   const admin =
@@ -785,10 +798,10 @@ function updateUserInterface() {
 
     });
 
-
+  const adminSec = $("admin");
   if (
     !admin &&
-    $("admin").classList.contains("active")
+    adminSec && adminSec.classList.contains("active")
   ) {
 
     navigate("dashboard");
@@ -798,29 +811,29 @@ function updateUserInterface() {
 
   if (loggedIn) {
 
-    $("welcomeTitle").textContent =
+    if($("welcomeTitle")) $("welcomeTitle").textContent =
       `Welcome back, ${loginState.name}`;
 
-    $("welcomeText").textContent =
+    if($("welcomeText")) $("welcomeText").textContent =
       loginState.role === "admin"
         ? "Administrator control and academic management dashboard."
         : "Your academic home dashboard.";
 
-    $("profileName").textContent =
+    if($("profileName")) $("profileName").textContent =
       loginState.name;
 
-    $("profileStatus").textContent =
+    if($("profileStatus")) $("profileStatus").textContent =
       loginState.roleName;
 
   } else {
 
-    $("welcomeTitle").textContent =
+    if($("welcomeTitle")) $("welcomeTitle").textContent =
       "Welcome to your dashboard";
 
-    $("welcomeText").textContent =
+    if($("welcomeText")) $("welcomeText").textContent =
       "Your academic home dashboard.";
 
-    $("profileStatus").textContent =
+    if($("profileStatus")) $("profileStatus").textContent =
       "Guest";
 
   }
@@ -913,7 +926,7 @@ function updateSessionTimer() {
 
   if (!state.sessionStart) {
 
-    $("sessionTimer").textContent =
+    if($("sessionTimer")) $("sessionTimer").textContent =
       "00:00:00";
 
     return;
@@ -928,8 +941,7 @@ function updateSessionTimer() {
       new Date(state.sessionStart).getTime()
     );
 
-
-  $("sessionTimer").textContent =
+  if($("sessionTimer")) $("sessionTimer").textContent =
     durationClock(elapsed);
 
 }
@@ -970,15 +982,17 @@ function updateActivityStatus() {
   const online =
     Boolean(loginState);
 
+  const aBadge = $("activityBadge");
+  if (!aBadge) return;
 
-  $("activityBadge").textContent =
+
+  aBadge.textContent =
     online
       ? "ONLINE"
       : "OFFLINE";
 
 
-  $("activityBadge")
-    .className =
+  aBadge.className =
       `badge ${online ? "green" : "red"}`;
 
 }
@@ -1012,7 +1026,7 @@ function startBreak() {
 
   updateBreakTimer();
 
-  $("breakButton").textContent =
+  if($("breakButton")) $("breakButton").textContent =
     "End Break";
 
 
@@ -1038,11 +1052,10 @@ function endBreak() {
 
   }
 
-
-  $("breakTimer").textContent =
+  if($("breakTimer")) $("breakTimer").textContent =
     "15:00";
 
-  $("breakButton").textContent =
+  if($("breakButton")) $("breakButton").textContent =
     "Start Break";
 
   showToast(
@@ -1085,8 +1098,7 @@ function updateBreakTimer() {
   const seconds =
     remaining % 60;
 
-
-  $("breakTimer").textContent =
+  if($("breakTimer")) $("breakTimer").textContent =
     `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
 
@@ -1214,6 +1226,8 @@ function renderCourses() {
   const grid =
     $("coursesGrid");
 
+  if (!grid) return;
+
 
   grid.innerHTML =
     SUBJECTS.map(subject => {
@@ -1266,7 +1280,10 @@ function renderCourses() {
 
 function renderDashboardCourses() {
 
-  $("dashboardCourses").innerHTML =
+  const dc = $("dashboardCourses");
+  if (!dc) return;
+
+  dc.innerHTML =
     SUBJECTS.map(subject => {
 
       const percent =
@@ -1306,58 +1323,13 @@ function renderDashboardCourses() {
 
 
 /* ============================================================
-   WEEKLY PROGRESS
+   WEEKLY PROGRESS (COMPLETED)
    ============================================================ */
 
+/**
+ * Renders the interactive weekly progress trackers.
+ * This is where your code previously cut off.
+ */
 function renderProgress() {
 
-  const container =
-    $("progressContainer");
-
-
-  container.innerHTML =
-    SUBJECTS.map(subject => {
-
-      const weeks =
-        state.progress[subject.id];
-
-
-      return `
-        <article class="progress-card">
-
-          <h2>
-            ${escapeHTML(subject.name)}
-          </h2>
-
-          <div class="weeks">
-
-            ${weeks.map(
-              (status, index) => {
-
-                const className =
-                  status === "complete"
-                    ? "complete"
-                    : status === "process"
-                      ? "process"
-                      : "";
-
-
-                return `
-                  <button
-                    class="week ${className}"
-                    data-subject="${subject.id}"
-                    data-week="${index}"
-                    title="Click: In Process | Double-click: Complete"
-                    type="button"
-                  >
-                    W${index + 1}
-                  </button>
-                `;
-
-              }
-            ).join("")}
-
-          </div>
-
-          <button
-            class="button primary s
+  const con
