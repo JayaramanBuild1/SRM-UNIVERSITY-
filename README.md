@@ -1,27 +1,29 @@
-# SRM BBA Student Portal
+# SRM BBA Student Portal — Version 4
 
-## Version 1
+Professional frontend academic portal for SRM BBA.
 
-A professional, responsive SRM BBA Student Portal built with:
+## Version
 
-- HTML
-- CSS
+Version 4.0
+
+Academic Period:
+2026–2029
+
+Technology:
+- HTML5
+- CSS3
 - JavaScript
 - LocalStorage
-- IndexedDB
-- SVG
 
-The project is designed to work as a static website and can be hosted on GitHub Pages.
+Hosting:
+GitHub Pages
 
----
 
-# 1. Project Structure
+## Files
 
 ```text
-SRM-BBA-Student-Portal/
-│
-├── index.html
-├── styles.css
-├── app.js
-├── logo.svg
-└── README.md
+index.html
+styles.css
+app.js
+logo.svg
+README.md
