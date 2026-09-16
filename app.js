@@ -1,1183 +1,1105 @@
 /* =========================================================
    SRM BBA STUDENT PORTAL
-   VERSION 2.0
-   Main Application Controller
-   ========================================================= */
+   VERSION 3
+   Main Application JavaScript
+========================================================= */
 
+"use strict";
 
 /* =========================================================
-   01. CONFIGURATION
-   ========================================================= */
+   APPLICATION CONFIGURATION
+========================================================= */
 
 const APP_CONFIG = {
-  version: "2.0",
-  programme: "SRM BBA",
-  academicPeriod: "2026–2029",
+    version: "3.0",
 
-  officialSRMLogin:
-    "https://sp.srmist.edu.in/srmiststudentportal/students/loginManager/youLogin.jsp",
+    programme: "SRM BBA",
 
-  maxMaterialSize:
-    15 * 1024 * 1024,
+    academicPeriod: "2026–2029",
 
-  totalWeeksPerCourse: 15,
+    officialSRMLogin:
+        "https://sp.srmist.edu.in/srmiststudentportal/students/loginManager/youLogin.jsp",
 
-  storageKey:
-    "srm_bba_portal_v2",
+    totalWeeksPerCourse: 15,
 
-  loginKey:
-    "srm_bba_login_v2",
+    maxMaterialSize: 15 * 1024 * 1024,
 
-  sidebarKey:
-    "srm_bba_sidebar_v2",
+    storageKey: "srm_bba_portal_v3",
 
-  themeKey:
-    "srm_bba_theme_v2",
+    loginKey: "srm_bba_login_v3",
 
-  sessionKey:
-    "srm_bba_session_v2"
+    themeKey: "srm_bba_theme_v3",
+
+    sidebarKey: "srm_bba_sidebar_v3",
+
+    sessionKey: "srm_bba_session_v3"
 };
 
 
 /* =========================================================
-   02. DEMO LOGIN CREDENTIALS
-   =========================================================
-
-   IMPORTANT:
-   This is a FRONTEND-ONLY demo login.
-
-   GitHub Pages cannot securely hide passwords because
-   JavaScript is delivered to the browser.
-
-   For a real production portal, replace this section with
-   Firebase Authentication / Supabase / another backend.
-   ========================================================= */
+   DEMO LOGIN CONFIGURATION
+   ---------------------------------------------------------
+   Frontend demo credentials are not secure authentication.
+========================================================= */
 
 const LOGIN_CREDENTIALS = {
-  student: {
-    username: "js3513",
-    password: "Raman@7917",
-    name: "S Jayaraman",
-    role: "BBA Student"
-  },
+    student: {
+        username: "js3513",
+        password: "Raman@7917",
+        name: "S Jayaraman",
+        role: "BBA Student"
+    },
 
-  admin: {
-    username: "Admin",
-    password: "Admin@SRM",
-    name: "SRM BBA Admin",
-    role: "Administrator"
-  }
+    admin: {
+        username: "Admin",
+        password: "Admin@SRM",
+        name: "SRM BBA Admin",
+        role: "Administrator"
+    }
 };
 
 
 /* =========================================================
-   03. SUBJECT DATA
-   =========================================================
-
-   These are editable portal subject labels.
-
-   Replace these names/codes with the exact official
-   semester subject list whenever required.
-   ========================================================= */
+   SUBJECTS
+========================================================= */
 
 const SUBJECTS = [
-  {
-    id: "subject-01",
-    code: "BBA-01",
-    name: "Principles of Management"
-  },
-  {
-    id: "subject-02",
-    code: "BBA-02",
-    name: "Business Economics"
-  },
-  {
-    id: "subject-03",
-    code: "BBA-03",
-    name: "Financial Accounting"
-  },
-  {
-    id: "subject-04",
-    code: "BBA-04",
-    name: "Professional Communication"
-  },
-  {
-    id: "subject-05",
-    code: "BBA-05",
-    name: "Marketing Management"
-  },
-  {
-    id: "subject-06",
-    code: "BBA-06",
-    name: "Production & Operations Management"
-  },
-  {
-    id: "subject-07",
-    code: "BBA-07",
-    name: "Foundation of AI-ML"
-  }
+    {
+        id: "management-science",
+        name: "Management Science",
+        code: "V26UBA101",
+        icon: "📊"
+    },
+
+    {
+        id: "production-operations",
+        name: "Production & Operations Management",
+        code: "V26UBA102",
+        icon: "⚙️"
+    },
+
+    {
+        id: "marketing-management",
+        name: "Marketing Management",
+        code: "V26UBA103",
+        icon: "📣"
+    },
+
+    {
+        id: "professional-communication",
+        name: "Professional Communication",
+        code: "V26UBA104",
+        icon: "💬"
+    },
+
+    {
+        id: "health-wellness",
+        name: "Health & Wellness",
+        code: "V26UBA105",
+        icon: "❤️"
+    },
+
+    {
+        id: "foundation-ai-ml",
+        name: "Foundation of AI-ML",
+        code: "V26UBA106",
+        icon: "🤖"
+    },
+
+    {
+        id: "environmental-studies",
+        name: "Environmental Studies",
+        code: "V26UBA107",
+        icon: "🌱"
+    }
 ];
 
 
 /* =========================================================
-   04. DEFAULT APPLICATION STATE
-   ========================================================= */
+   DEMO LIVE CLASSES
+========================================================= */
 
-function createEmptyProgress() {
-  const progress = {};
+const DEFAULT_CLASSES = [
+    {
+        id: "class-1",
+        subject: "Professional Communication",
+        dateTime: "2026-09-17T18:00",
+        zoomLink: "https://zoom.us/",
+        createdAt: Date.now()
+    },
 
-  SUBJECTS.forEach(subject => {
-    progress[subject.id] =
-      Array(APP_CONFIG.totalWeeksPerCourse)
-        .fill("pending");
-  });
+    {
+        id: "class-2",
+        subject: "Marketing Management",
+        dateTime: "2026-09-18T18:00",
+        zoomLink: "https://zoom.us/",
+        createdAt: Date.now()
+    },
 
-  return progress;
-}
-
-
-function createDefaultClasses() {
-  const now = new Date();
-
-  const classes = [];
-
-  /*
-   * Demo schedule is generated relative to the current date
-   * so the countdown does not become permanently expired.
-   */
-
-  const schedule = [
     {
-      subjectIndex: 0,
-      days: 1,
-      hour: 18,
-      minute: 0
-    },
-    {
-      subjectIndex: 1,
-      days: 2,
-      hour: 19,
-      minute: 0
-    },
-    {
-      subjectIndex: 2,
-      days: 3,
-      hour: 18,
-      minute: 0
-    },
-    {
-      subjectIndex: 3,
-      days: 4,
-      hour: 18,
-      minute: 0
-    },
-    {
-      subjectIndex: 4,
-      days: 5,
-      hour: 19,
-      minute: 0
-    },
-    {
-      subjectIndex: 5,
-      days: 6,
-      hour: 18,
-      minute: 0
-    },
-    {
-      subjectIndex: 6,
-      days: 7,
-      hour: 19,
-      minute: 0
-    },
-    {
-      subjectIndex: 0,
-      days: 9,
-      hour: 18,
-      minute: 0
-    },
-    {
-      subjectIndex: 4,
-      days: 11,
-      hour: 19,
-      minute: 0
-    },
-    {
-      subjectIndex: 6,
-      days: 13,
-      hour: 18,
-      minute: 0
+        id: "class-3",
+        subject: "Management Science",
+        dateTime: "2026-09-19T18:00",
+        zoomLink: "https://zoom.us/",
+        createdAt: Date.now()
     }
-  ];
-
-  schedule.forEach((item, index) => {
-    const date = new Date(now);
-
-    date.setDate(
-      date.getDate() + item.days
-    );
-
-    date.setHours(
-      item.hour,
-      item.minute,
-      0,
-      0
-    );
-
-    const end = new Date(date);
-
-    end.setMinutes(
-      end.getMinutes() + 60
-    );
-
-    const subject =
-      SUBJECTS[item.subjectIndex];
-
-    classes.push({
-      id:
-        "class-" +
-        Date.now() +
-        "-" +
-        index,
-
-      subjectId:
-        subject.id,
-
-      subjectName:
-        subject.name,
-
-      start:
-        date.toISOString(),
-
-      end:
-        end.toISOString(),
-
-      zoom:
-        "https://zoom.us/j/00000000000",
-
-      topic:
-        subject.name + " — Live Class",
-
-      status:
-        "scheduled"
-    });
-  });
-
-  return classes;
-}
-
-
-function createDefaultAnnouncements() {
-  return [
-    {
-      id: createId("notice"),
-      title: "Welcome to the SRM BBA Portal",
-      message:
-        "Use this portal to track courses, weekly progress, live classes, study materials and academic tasks.",
-      type: "Portal",
-      pinned: true,
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: createId("notice"),
-      title: "Weekly Progress Tracking",
-      message:
-        "Click a week once to mark it In Process. Double-click the same week to mark it Complete, then press Save.",
-      type: "Academic",
-      pinned: false,
-      createdAt: new Date().toISOString()
-    }
-  ];
-}
-
-
-function createDefaultState() {
-  return {
-    progress:
-      createEmptyProgress(),
-
-    classes:
-      createDefaultClasses(),
-
-    announcements:
-      createDefaultAnnouncements(),
-
-    materials:
-      [],
-
-    assignments:
-      createDefaultAssignments(),
-
-    audit:
-      [],
-
-    session: {
-      startedAt: null,
-      endedAt: null
-    },
-
-    adminMinimized:
-      false
-  };
-}
-
-
-function createDefaultAssignments() {
-  return [
-    {
-      id: "assignment-01",
-      title: "Week 1–3 Tasks",
-      description: "Assignments, MCQ & ELQ",
-      status: "tracked"
-    },
-    {
-      id: "assignment-02",
-      title: "Week 4–9 Tasks",
-      description: "Weekly academic workflow",
-      status: "tracked"
-    },
-    {
-      id: "assignment-03",
-      title: "Week 10–15 Tasks",
-      description: "Final weekly requirements",
-      status: "tracked"
-    },
-    {
-      id: "assignment-04",
-      title: "Discussion Activities",
-      description: "Course discussion participation",
-      status: "tracked"
-    },
-    {
-      id: "assignment-05",
-      title: "Learning Assignments",
-      description: "Subject learning activities",
-      status: "tracked"
-    },
-    {
-      id: "assignment-06",
-      title: "LAQ / ELQ",
-      description: "Long-answer academic questions",
-      status: "tracked"
-    },
-    {
-      id: "assignment-07",
-      title: "MCQ Activities",
-      description: "Multiple-choice activities",
-      status: "tracked"
-    },
-    {
-      id: "assignment-08",
-      title: "Revision Work",
-      description: "Weekly revision activities",
-      status: "tracked"
-    },
-    {
-      id: "assignment-09",
-      title: "Study Notes",
-      description: "Notebook and study-material preparation",
-      status: "tracked"
-    },
-    {
-      id: "assignment-10",
-      title: "Course Review",
-      description: "Subject review activities",
-      status: "tracked"
-    },
-    {
-      id: "assignment-11",
-      title: "Academic Preparation",
-      description: "Examination preparation",
-      status: "tracked"
-    },
-    {
-      id: "assignment-12",
-      title: "Final Review",
-      description: "Final course checklist",
-      status: "tracked"
-    }
-  ];
-}
+];
 
 
 /* =========================================================
-   05. GLOBAL VARIABLES
-   ========================================================= */
+   DEFAULT ANNOUNCEMENTS
+========================================================= */
 
-let state = null;
+const DEFAULT_ANNOUNCEMENTS = [
+    {
+        id: "announcement-1",
+
+        title: "Welcome to SRM BBA Portal",
+
+        message:
+            "Use this dashboard to manage courses, weekly progress, classes and study materials.",
+
+        createdAt: Date.now()
+    },
+
+    {
+        id: "announcement-2",
+
+        title: "Weekly Progress",
+
+        message:
+            "Click a week once to mark it In Process and double-click the same week to mark it Complete.",
+
+        createdAt: Date.now()
+    }
+];
+
+
+/* =========================================================
+   DEFAULT ASSIGNMENTS
+========================================================= */
+
+const DEFAULT_ASSIGNMENTS = [
+    {
+        id: "assignment-1",
+        subject: "Environmental Studies",
+        title: "Weekly Assignment",
+        type: "Assignment",
+        status: "Pending"
+    },
+
+    {
+        id: "assignment-2",
+        subject: "Marketing Management",
+        title: "Learning Activity Question",
+        type: "LAQ",
+        status: "Pending"
+    },
+
+    {
+        id: "assignment-3",
+        subject: "Production & Operations Management",
+        title: "Discussion Activity",
+        type: "Discussion",
+        status: "Pending"
+    },
+
+    {
+        id: "assignment-4",
+        subject: "Foundation of AI-ML",
+        title: "Extended Learning Question",
+        type: "ELQ",
+        status: "Pending"
+    }
+];
+
+
+/* =========================================================
+   DEFAULT CALENDAR
+========================================================= */
+
+const DEFAULT_CALENDAR = [
+    {
+        date: "2026-09-19",
+        title: "Academic Task Deadline",
+        description:
+            "Complete available assignments and academic activities."
+    },
+
+    {
+        date: "2026-09-24",
+        title: "Revision Planning",
+        description:
+            "Revision schedule can be followed after travel period."
+    },
+
+    {
+        date: "2026-10-01",
+        title: "Monthly Academic Review",
+        description:
+            "Review weekly course progress and pending activities."
+    }
+];
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let portalState = createDefaultState();
 
 let currentUser = null;
 
 let countdownInterval = null;
 
+let sessionInterval = null;
+
 let breakInterval = null;
 
-let materialDatabase = null;
-
-let draftProgress = {};
-
-let currentSection = "dashboard";
+let toastTimeout = null;
 
 
 /* =========================================================
-   06. BASIC HELPERS
-   ========================================================= */
+   DEFAULT STATE
+========================================================= */
+
+function createDefaultState() {
+
+    const progress = {};
+
+    SUBJECTS.forEach(subject => {
+
+        progress[subject.id] =
+            Array(APP_CONFIG.totalWeeksPerCourse).fill("not-started");
+
+    });
+
+
+    return {
+
+        progress,
+
+        classes: DEFAULT_CLASSES.map(item => ({
+            ...item
+        })),
+
+        announcements: DEFAULT_ANNOUNCEMENTS.map(item => ({
+            ...item
+        })),
+
+        assignments: DEFAULT_ASSIGNMENTS.map(item => ({
+            ...item
+        })),
+
+        calendar: DEFAULT_CALENDAR.map(item => ({
+            ...item
+        })),
+
+        materials: [],
+
+        audit: [],
+
+        adminMinimized: false
+    };
+}
+
+
+/* =========================================================
+   DOM HELPERS
+========================================================= */
 
 function $(selector) {
-  return document.querySelector(selector);
+    return document.querySelector(selector);
 }
 
 
 function $all(selector) {
-  return Array.from(
-    document.querySelectorAll(selector)
-  );
-}
-
-
-function createId(prefix = "id") {
-  if (
-    window.crypto &&
-    typeof window.crypto.randomUUID === "function"
-  ) {
-    return prefix + "-" + window.crypto.randomUUID();
-  }
-
-  return (
-    prefix +
-    "-" +
-    Date.now() +
-    "-" +
-    Math.random()
-      .toString(36)
-      .slice(2, 10)
-  );
-}
-
-
-function escapeHTML(value) {
-  if (value === null || value === undefined) {
-    return "";
-  }
-
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-
-function formatBytes(bytes) {
-  if (!bytes) {
-    return "0 KB";
-  }
-
-  const units = [
-    "Bytes",
-    "KB",
-    "MB",
-    "GB"
-  ];
-
-  const index =
-    Math.floor(
-      Math.log(bytes) /
-      Math.log(1024)
-    );
-
-  return (
-    Math.round(
-      (bytes /
-        Math.pow(1024, index)) *
-        100
-    ) / 100 +
-    " " +
-    units[index]
-  );
-}
-
-
-function formatDate(dateValue) {
-  const date =
-    dateValue instanceof Date
-      ? dateValue
-      : new Date(dateValue);
-
-  if (Number.isNaN(date.getTime())) {
-    return "—";
-  }
-
-  return date.toLocaleDateString(
-    "en-IN",
-    {
-      day: "2-digit",
-      month: "short",
-      year: "numeric"
-    }
-  );
-}
-
-
-function formatTime(dateValue) {
-  const date =
-    dateValue instanceof Date
-      ? dateValue
-      : new Date(dateValue);
-
-  if (Number.isNaN(date.getTime())) {
-    return "—";
-  }
-
-  return date.toLocaleTimeString(
-    "en-IN",
-    {
-      hour: "2-digit",
-      minute: "2-digit"
-    }
-  );
-}
-
-
-function formatDateTime(dateValue) {
-  return (
-    formatDate(dateValue) +
-    " • " +
-    formatTime(dateValue)
-  );
-}
-
-
-function getSubject(subjectId) {
-  return (
-    SUBJECTS.find(
-      subject =>
-        subject.id === subjectId
-    ) || null
-  );
-}
-
-
-function getSubjectName(subjectId) {
-  const subject =
-    getSubject(subjectId);
-
-  return subject
-    ? subject.name
-    : "Unknown Subject";
-}
-
-
-function saveState() {
-  localStorage.setItem(
-    APP_CONFIG.storageKey,
-    JSON.stringify(state)
-  );
-}
-
-
-function loadState() {
-  const raw =
-    localStorage.getItem(
-      APP_CONFIG.storageKey
-    );
-
-  if (!raw) {
-    state =
-      createDefaultState();
-
-    saveState();
-
-    return;
-  }
-
-  try {
-    const parsed =
-      JSON.parse(raw);
-
-    const defaults =
-      createDefaultState();
-
-    state = {
-      ...defaults,
-      ...parsed,
-
-      progress:
-        parsed.progress ||
-        defaults.progress,
-
-      classes:
-        Array.isArray(parsed.classes)
-          ? parsed.classes
-          : defaults.classes,
-
-      announcements:
-        Array.isArray(parsed.announcements)
-          ? parsed.announcements
-          : defaults.announcements,
-
-      materials:
-        Array.isArray(parsed.materials)
-          ? parsed.materials
-          : [],
-
-      assignments:
-        Array.isArray(parsed.assignments)
-          ? parsed.assignments
-          : defaults.assignments,
-
-      audit:
-        Array.isArray(parsed.audit)
-          ? parsed.audit
-          : []
-    };
-
-    SUBJECTS.forEach(subject => {
-      if (
-        !Array.isArray(
-          state.progress[subject.id]
-        )
-      ) {
-        state.progress[subject.id] =
-          Array(
-            APP_CONFIG.totalWeeksPerCourse
-          ).fill("pending");
-      }
-
-      while (
-        state.progress[subject.id].length <
-        APP_CONFIG.totalWeeksPerCourse
-      ) {
-        state.progress[subject.id]
-          .push("pending");
-      }
-
-      state.progress[subject.id] =
-        state.progress[subject.id].slice(
-          0,
-          APP_CONFIG.totalWeeksPerCourse
-        );
-    });
-
-  } catch (error) {
-    console.error(
-      "State loading error:",
-      error
-    );
-
-    state =
-      createDefaultState();
-
-    saveState();
-  }
+    return Array.from(document.querySelectorAll(selector));
 }
 
 
 /* =========================================================
-   07. AUDIT LOG
-   ========================================================= */
+   INITIALIZATION
+========================================================= */
 
-function addAudit(action, details = "") {
-  if (!state) {
-    return;
-  }
+document.addEventListener("DOMContentLoaded", () => {
 
-  state.audit.unshift({
-    id: createId("audit"),
-    action,
-    details,
-    user:
-      currentUser
-        ? currentUser.username
-        : "system",
-    role:
-      currentUser
-        ? currentUser.role
-        : "system",
-    timestamp:
-      new Date().toISOString()
-  });
+    initializeApplication();
 
-  state.audit =
-    state.audit.slice(0, 100);
+});
 
-  saveState();
+
+function initializeApplication() {
+
+    loadPortalState();
+
+    loadTheme();
+
+    loadSidebarState();
+
+    bindGlobalEvents();
+
+    renderDashboard();
+
+    renderCourses();
+
+    renderProgress();
+
+    renderLiveClasses();
+
+    renderAssignments();
+
+    renderMaterials();
+
+    renderCalendar();
+
+    renderAnnouncements();
+
+    renderAnalytics();
+
+    renderProfile();
+
+    renderAdmin();
+
+    updateCurrentDate();
+
+    updateHeaderUser();
+
+    updateStudentStatus();
+
+    startCountdown();
+
+    startSessionClock();
+
+    startBreakClock();
+
 }
 
 
 /* =========================================================
-   08. LOGIN STORAGE
-   ========================================================= */
+   GLOBAL EVENT BINDINGS
+========================================================= */
 
-function saveLoginSession(user) {
-  localStorage.setItem(
-    APP_CONFIG.loginKey,
-    JSON.stringify({
-      username: user.username,
-      name: user.name,
-      role: user.role,
-      loginAt: new Date().toISOString()
-    })
-  );
-}
+function bindGlobalEvents() {
 
+    /* -----------------------------------------
+       LOGIN OPEN
+    ----------------------------------------- */
 
-function loadLoginSession() {
-  const raw =
-    localStorage.getItem(
-      APP_CONFIG.loginKey
-    );
+    const openLoginButton = $("#openLoginButton");
 
-  if (!raw) {
-    return null;
-  }
+    if (openLoginButton) {
 
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-
-function clearLoginSession() {
-  localStorage.removeItem(
-    APP_CONFIG.loginKey
-  );
-}
-
-
-/* =========================================================
-   09. LOGIN UI
-   ========================================================= */
-
-function initializeLogin() {
-
-  const loginScreen =
-    $("#loginScreen");
-
-  const portalApp =
-    $("#portalApp");
-
-  const savedUser =
-    loadLoginSession();
-
-  if (savedUser) {
-
-    currentUser =
-      savedUser;
-
-    if (loginScreen) {
-      loginScreen.hidden = true;
-    }
-
-    if (portalApp) {
-      portalApp.hidden = false;
-    }
-
-    startApplication();
-    return;
-  }
-
-  if (loginScreen) {
-    loginScreen.hidden = false;
-  }
-
-  if (portalApp) {
-    portalApp.hidden = true;
-  }
-
-  bindLoginEvents();
-}
-
-
-function bindLoginEvents() {
-
-  const roleButtons =
-    $all("[data-login-role]");
-
-  roleButtons.forEach(button => {
-
-    button.addEventListener(
-      "click",
-      () => {
-
-        const role =
-          button.dataset.loginRole;
-
-        roleButtons.forEach(item =>
-          item.classList.remove(
-            "active"
-          )
+        openLoginButton.addEventListener(
+            "click",
+            openLoginModal
         );
 
-        button.classList.add(
-          "active"
+    }
+
+
+    /* -----------------------------------------
+       LOGIN CLOSE
+    ----------------------------------------- */
+
+    const closeLoginButton = $("#closeLoginButton");
+
+    if (closeLoginButton) {
+
+        closeLoginButton.addEventListener(
+            "click",
+            closeLoginModal
         );
 
-        $all(".login-form")
-          .forEach(form =>
-            form.classList.remove(
-              "active"
-            )
-          );
+    }
 
-        const form =
-          document.querySelector(
-            `[data-login-form="${role}"]`
-          );
 
-        if (form) {
-          form.classList.add(
-            "active"
-          );
+    const loginOverlay = $("#loginOverlay");
+
+    if (loginOverlay) {
+
+        loginOverlay.addEventListener(
+            "click",
+            closeLoginModal
+        );
+
+    }
+
+
+    /* -----------------------------------------
+       ESCAPE CLOSES LOGIN
+    ----------------------------------------- */
+
+    document.addEventListener("keydown", event => {
+
+        if (
+            event.key === "Escape" &&
+            isLoginModalOpen()
+        ) {
+
+            closeLoginModal();
+
         }
-      }
-    );
-  });
 
-
-  $all(".password-toggle")
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          const input =
-            button.parentElement
-              .querySelector("input");
-
-          if (!input) {
-            return;
-          }
-
-          if (
-            input.type === "password"
-          ) {
-
-            input.type = "text";
-
-            button.textContent =
-              "🙈";
-
-          } else {
-
-            input.type = "password";
-
-            button.textContent =
-              "👁";
-          }
-        }
-      );
     });
 
 
-  const studentForm =
-    $("#studentLoginForm");
+    /* -----------------------------------------
+       LOGIN ROLE BUTTONS
+    ----------------------------------------- */
 
-  if (studentForm) {
+    $all("[data-login-role]").forEach(button => {
 
-    studentForm.addEventListener(
-      "submit",
-      event => {
+        button.addEventListener(
+            "click",
+            () => {
 
-        event.preventDefault();
+                switchLoginRole(
+                    button.dataset.loginRole
+                );
 
-        handleLogin(
-          "student",
-          studentForm
+            }
         );
-      }
-    );
-  }
+
+    });
 
 
-  const adminForm =
-    $("#adminLoginForm");
+    /* -----------------------------------------
+       STUDENT LOGIN
+    ----------------------------------------- */
 
-  if (adminForm) {
+    const studentLoginForm =
+        $("#studentLoginForm");
 
-    adminForm.addEventListener(
-      "submit",
-      event => {
+    if (studentLoginForm) {
 
-        event.preventDefault();
+        studentLoginForm.addEventListener(
+            "submit",
+            event => {
 
-        handleLogin(
-          "admin",
-          adminForm
+                event.preventDefault();
+
+                handleLogin(
+                    "student",
+                    studentLoginForm
+                );
+
+            }
         );
-      }
-    );
-  }
+
+    }
 
 
-  const officialButtons =
-    $all(
-      "[data-official-login], #officialLoginButton"
-    );
+    /* -----------------------------------------
+       ADMIN LOGIN
+    ----------------------------------------- */
 
-  officialButtons.forEach(button => {
+    const adminLoginForm =
+        $("#adminLoginForm");
 
-    button.addEventListener(
-      "click",
-      () => {
+    if (adminLoginForm) {
 
-        window.open(
-          APP_CONFIG.officialSRMLogin,
-          "_blank",
-          "noopener,noreferrer"
+        adminLoginForm.addEventListener(
+            "submit",
+            event => {
+
+                event.preventDefault();
+
+                handleLogin(
+                    "admin",
+                    adminLoginForm
+                );
+
+            }
         );
-      }
+
+    }
+
+
+    /* -----------------------------------------
+       LOGOUT
+    ----------------------------------------- */
+
+    const logoutButton =
+        $("#logoutButton");
+
+    if (logoutButton) {
+
+        logoutButton.addEventListener(
+            "click",
+            logout
+        );
+
+    }
+
+
+    /* -----------------------------------------
+       SIDEBAR
+    ----------------------------------------- */
+
+    const sidebarToggle =
+        $("#sidebarToggle");
+
+    if (sidebarToggle) {
+
+        sidebarToggle.addEventListener(
+            "click",
+            toggleSidebar
+        );
+
+    }
+
+
+    const sidebarBackdrop =
+        $("#sidebarBackdrop");
+
+    if (sidebarBackdrop) {
+
+        sidebarBackdrop.addEventListener(
+            "click",
+            closeMobileSidebar
+        );
+
+    }
+
+
+    /* -----------------------------------------
+       NAVIGATION
+    ----------------------------------------- */
+
+    $all("[data-section]").forEach(button => {
+
+        button.addEventListener(
+            "click",
+            event => {
+
+                const section =
+                    event.currentTarget.dataset.section;
+
+                if (section) {
+
+                    navigateTo(section);
+
+                }
+
+            }
+        );
+
+    });
+
+
+    /* -----------------------------------------
+       THEME
+    ----------------------------------------- */
+
+    const themeToggle =
+        $("#themeToggle");
+
+    if (themeToggle) {
+
+        themeToggle.addEventListener(
+            "click",
+            toggleTheme
+        );
+
+    }
+
+
+    /* -----------------------------------------
+       BREAK
+    ----------------------------------------- */
+
+    const breakButton =
+        $("#breakButton");
+
+    if (breakButton) {
+
+        breakButton.addEventListener(
+            "click",
+            toggleBreak
+        );
+
+    }
+
+
+    /* -----------------------------------------
+       JOIN CLASS
+    ----------------------------------------- */
+
+    const joinNextClassButton =
+        $("#joinNextClassButton");
+
+    if (joinNextClassButton) {
+
+        joinNextClassButton.addEventListener(
+            "click",
+            joinNextClass
+        );
+
+    }
+
+
+    /* -----------------------------------------
+       OFFICIAL SRM
+    ----------------------------------------- */
+
+    const officialSRMButton =
+        $("#officialSRMButton");
+
+    if (officialSRMButton) {
+
+        officialSRMButton.addEventListener(
+            "click",
+            () => {
+
+                window.open(
+                    APP_CONFIG.officialSRMLogin,
+                    "_blank",
+                    "noopener,noreferrer"
+                );
+
+            }
+        );
+
+    }
+
+
+    /* -----------------------------------------
+       ADMIN BANNER
+    ----------------------------------------- */
+
+    const adminMinimizeButton =
+        $("#adminMinimizeButton");
+
+    if (adminMinimizeButton) {
+
+        adminMinimizeButton.addEventListener(
+            "click",
+            toggleAdminBanner
+        );
+
+    }
+
+
+    /* -----------------------------------------
+       ADMIN CLASS FORM
+    ----------------------------------------- */
+
+    const classForm =
+        $("#classForm");
+
+    if (classForm) {
+
+        classForm.addEventListener(
+            "submit",
+            handleClassSubmit
+        );
+
+    }
+
+
+    /* -----------------------------------------
+       ANNOUNCEMENT FORM
+    ----------------------------------------- */
+
+    const announcementForm =
+        $("#announcementForm");
+
+    if (announcementForm) {
+
+        announcementForm.addEventListener(
+            "submit",
+            handleAnnouncementSubmit
+        );
+
+    }
+
+
+    /* -----------------------------------------
+       MATERIAL FORM
+    ----------------------------------------- */
+
+    const materialForm =
+        $("#materialForm");
+
+    if (materialForm) {
+
+        materialForm.addEventListener(
+            "submit",
+            handleMaterialSubmit
+        );
+
+    }
+
+
+    /* -----------------------------------------
+       EXPORT
+    ----------------------------------------- */
+
+    const exportDataButton =
+        $("#exportDataButton");
+
+    if (exportDataButton) {
+
+        exportDataButton.addEventListener(
+            "click",
+            exportPortalData
+        );
+
+    }
+
+
+    /* -----------------------------------------
+       IMPORT
+    ----------------------------------------- */
+
+    const importDataButton =
+        $("#importDataButton");
+
+    const importDataFile =
+        $("#importDataFile");
+
+    if (
+        importDataButton &&
+        importDataFile
+    ) {
+
+        importDataButton.addEventListener(
+            "click",
+            () => importDataFile.click()
+        );
+
+
+        importDataFile.addEventListener(
+            "change",
+            handleImportData
+        );
+
+    }
+
+
+    /* -----------------------------------------
+       RESET
+    ----------------------------------------- */
+
+    const resetDataButton =
+        $("#resetDataButton");
+
+    if (resetDataButton) {
+
+        resetDataButton.addEventListener(
+            "click",
+            resetPortalData
+        );
+
+    }
+
+
+    /* -----------------------------------------
+       RESIZE
+    ----------------------------------------- */
+
+    window.addEventListener(
+        "resize",
+        handleWindowResize
     );
-  });
+
 }
 
+
+/* =========================================================
+   LOGIN MODAL
+========================================================= */
+
+function openLoginModal() {
+
+    const modal = $("#loginModal");
+
+    if (!modal) {
+        return;
+    }
+
+    modal.hidden = false;
+
+    modal.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+    document.body.classList.add(
+        "login-open"
+    );
+
+
+    switchLoginRole("student");
+
+
+    const username =
+        $("#studentUsername");
+
+    if (username) {
+
+        setTimeout(() => {
+
+            username.focus();
+
+        }, 100);
+
+    }
+
+}
+
+
+function closeLoginModal() {
+
+    const modal = $("#loginModal");
+
+    if (!modal) {
+        return;
+    }
+
+    modal.hidden = true;
+
+    modal.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+    document.body.classList.remove(
+        "login-open"
+    );
+
+}
+
+
+function isLoginModalOpen() {
+
+    const modal = $("#loginModal");
+
+    return modal &&
+        !modal.hidden;
+
+}
+
+
+/* =========================================================
+   LOGIN ROLE SWITCH
+========================================================= */
+
+function switchLoginRole(role) {
+
+    if (
+        role !== "student" &&
+        role !== "admin"
+    ) {
+
+        role = "student";
+
+    }
+
+
+    $all("[data-login-role]").forEach(button => {
+
+        button.classList.toggle(
+            "active",
+            button.dataset.loginRole === role
+        );
+
+    });
+
+
+    $all("[data-login-form]").forEach(form => {
+
+        const isCurrent =
+            form.dataset.loginForm === role;
+
+        form.hidden = !isCurrent;
+
+        form.classList.toggle(
+            "active",
+            isCurrent
+        );
+
+    });
+
+
+    clearLoginMessages();
+
+}
+
+
+/* =========================================================
+   LOGIN
+========================================================= */
 
 function handleLogin(role, form) {
 
-  const usernameInput =
-    form.querySelector(
-      'input[name="username"]'
-    ) ||
-    form.querySelector(
-      "#studentUsername, #adminUsername"
-    );
+    const usernameInput =
+        form.querySelector(
+            'input[name="username"]'
+        );
 
-  const passwordInput =
-    form.querySelector(
-      'input[name="password"]'
-    ) ||
-    form.querySelector(
-      "#studentPassword, #adminPassword"
-    );
-
-  const message =
-    form.querySelector(
-      ".login-message"
-    ) ||
-    document.querySelector(
-      `[data-login-message="${role}"]`
-    );
+    const passwordInput =
+        form.querySelector(
+            'input[name="password"]'
+        );
 
 
-  const username =
-    usernameInput
-      ? usernameInput.value.trim()
-      : "";
+    if (
+        !usernameInput ||
+        !passwordInput
+    ) {
 
-  const password =
-    passwordInput
-      ? passwordInput.value
-      : "";
+        return;
 
-
-  const credentials =
-    LOGIN_CREDENTIALS[role];
+    }
 
 
-  if (
-    username === credentials.username &&
-    password === credentials.password
-  ) {
+    const username =
+        usernameInput.value.trim();
+
+    const password =
+        passwordInput.value;
+
+
+    const credentials =
+        LOGIN_CREDENTIALS[role];
+
+
+    if (!credentials) {
+
+        showLoginMessage(
+            role,
+            "Login configuration unavailable."
+        );
+
+        return;
+
+    }
+
+
+    if (
+        username !== credentials.username ||
+        password !== credentials.password
+    ) {
+
+        showLoginMessage(
+            role,
+            "Incorrect username or password."
+        );
+
+        return;
+
+    }
+
 
     currentUser = {
-      username:
-        credentials.username,
 
-      name:
-        credentials.name,
+        role,
 
-      role:
-        credentials.role,
+        username: credentials.username,
 
-      loginAt:
-        new Date().toISOString()
+        name: credentials.name,
+
+        displayRole: credentials.role
+
     };
 
-    saveLoginSession(
-      currentUser
-    );
 
-    startSession();
+    saveLoginSession();
+
+    startStudentSession();
 
     addAudit(
-      "Login",
-      role +
-        " login successful"
+        `${credentials.role} logged in`
     );
 
-    if (message) {
-      message.textContent =
-        "Login successful.";
-      message.classList.add(
-        "success"
-      );
-    }
 
-    const loginScreen =
-      $("#loginScreen");
+    updateHeaderUser();
 
-    const portalApp =
-      $("#portalApp");
+    updateStudentStatus();
 
-    if (loginScreen) {
-      loginScreen.hidden = true;
-    }
+    updateAdminVisibility();
 
-    if (portalApp) {
-      portalApp.hidden = false;
-    }
 
-    startApplication();
+    closeLoginModal();
+
 
     showToast(
-      "Welcome, " +
-        currentUser.name,
-      "success"
+        `Welcome, ${credentials.name}`
     );
 
-    return;
-  }
+
+    renderAdmin();
 
 
-  if (message) {
-    message.textContent =
-      "Incorrect username or password.";
-    message.classList.remove(
-      "success"
-    );
-  }
+    /* -----------------------------------------
+       ADMIN LOGIN
+    ----------------------------------------- */
 
-  showToast(
-    "Incorrect login details.",
-    "error"
-  );
+    if (role === "admin") {
+
+        navigateTo("admin");
+
+    } else {
+
+        navigateTo("dashboard");
+
+    }
+
 }
 
 
 /* =========================================================
-   10. START APPLICATION
-   ========================================================= */
+   LOGIN MESSAGES
+========================================================= */
 
-function startApplication() {
+function showLoginMessage(
+    role,
+    message,
+    success = false
+) {
 
-  loadState();
+    const element =
+        document.querySelector(
+            `[data-login-message="${role}"]`
+        );
 
-  if (
-    !state.session ||
-    !state.session.startedAt
-  ) {
-    startSession();
-  }
 
-  applyTheme();
+    if (!element) {
+        return;
+    }
 
-  applySidebarState();
 
-  initializeIndexedDB();
+    element.textContent = message;
 
-  initializeNavigation();
+    element.classList.toggle(
+        "success",
+        success
+    );
 
-  initializeTopbar();
-
-  initializeDashboard();
-
-  initializeCourses();
-
-  initializeLiveClasses();
-
-  initializeMaterials();
-
-  initializeAssignments();
-
-  initializeCalendar();
-
-  initializeAnnouncements();
-
-  initializeAnalytics();
-
-  initializeProfile();
-
-  initializeAdmin();
-
-  initializeModals();
-
-  initializeSearch();
-
-  initializeQuickAccess();
-
-  renderAll();
-
-  startCountdown();
-
-  startBreakTimerLoop();
-
-  updateSessionUI();
-
-  enforceAdminVisibility();
-
-  setInterval(
-    updateSessionUI,
-    1000
-  );
 }
 
 
-/* =========================================================
-   11. NAVIGATION
-   ========================================================= */
+function clearLoginMessages() {
 
-const SECTION_TITLES = {
-  dashboard: "Dashboard",
-  courses: "My Courses",
-  live: "Live Classes",
-  materials: "Study Materials",
-  assignments: "Assignments",
-  calendar: "Calendar",
-  exams: "Examinations",
-  announcements: "Announcements",
-  analytics: "Analytics",
-  profile: "Profile",
-  admin: "Admin Control Centre"
-};
+    $all(".login-message").forEach(
+        element => {
 
+            element.textContent = "";
 
-function initializeNavigation() {
+            element.classList.remove(
+                "success"
+            );
 
-  $all(
-    "[data-section]"
-  ).forEach(button => {
-
-    button.addEventListener(
-      "click",
-      () => {
-
-        const section =
-          button.dataset.section;
-
-        if (!section) {
-          return;
         }
-
-        navigateTo(section);
-      }
     );
-  });
+
 }
 
 
-function navigateTo(section) {
+/* =========================================================
+   LOGIN SESSION
+========================================================= */
 
-  if (
-    section === "admin" &&
-    currentUser &&
-    !isAdmin()
-  ) {
-    showToast(
-      "Admin login is required.",
-      "error"
-    );
-
-  
+function save
