@@ -1,120 +1,67 @@
 <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 256 256"
-    width="256"
-    height="256"
-    role="img"
-    aria-labelledby="title desc"
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 160 160"
+  width="160"
+  height="160"
 >
+  <rect
+    x="8"
+    y="8"
+    width="144"
+    height="144"
+    rx="34"
+    fill="#6d4ce8"
+  />
 
-    <title id="title">
-        SRM BBA Student Portal
-    </title>
+  <rect
+    x="30"
+    y="30"
+    width="100"
+    height="100"
+    rx="22"
+    fill="#ffffff"
+  />
 
-    <desc id="desc">
-        SRM BBA academic portal logo
-    </desc>
+  <path
+    d="M48 61 L80 45 L112 61 L80 77 Z"
+    fill="#6d4ce8"
+  />
 
+  <path
+    d="M58 68 V87
+       C58 96 68 103 80 103
+       C92 103 102 96 102 87
+       V68"
+    fill="none"
+    stroke="#6d4ce8"
+    stroke-width="6"
+    stroke-linecap="round"
+  />
 
-    <!-- Background -->
+  <path
+    d="M112 61 V82"
+    stroke="#6d4ce8"
+    stroke-width="5"
+    stroke-linecap="round"
+  />
 
-    <rect
-        x="8"
-        y="8"
-        width="240"
-        height="240"
-        rx="52"
-        fill="#6c4ce6"
-    />
+  <circle
+    cx="112"
+    cy="87"
+    r="5"
+    fill="#6d4ce8"
+  />
 
-
-    <!-- Inner panel -->
-
-    <rect
-        x="30"
-        y="30"
-        width="196"
-        height="196"
-        rx="40"
-        fill="#ffffff"
-        opacity="0.98"
-    />
-
-
-    <!-- Graduation cap -->
-
-    <path
-        d="
-            M52 91
-            L128 55
-            L204 91
-            L128 127
-            Z
-        "
-        fill="#6c4ce6"
-    />
-
-
-    <!-- Cap lower section -->
-
-    <path
-        d="
-            M77 103
-            V132
-            C77 151 101 165 128 165
-            C155 165 179 151 179 132
-            V103
-            L128 127
-            Z
-        "
-        fill="#5135c7"
-    />
-
-
-    <!-- Cap button -->
-
-    <circle
-        cx="128"
-        cy="91"
-        r="7"
-        fill="#ffffff"
-    />
-
-
-    <!-- Tassel -->
-
-    <path
-        d="
-            M204 91
-            V128
-        "
-        fill="none"
-        stroke="#6c4ce6"
-        stroke-width="7"
-        stroke-linecap="round"
-    />
-
-    <circle
-        cx="204"
-        cy="135"
-        r="7"
-        fill="#6c4ce6"
-    />
-
-
-    <!-- BBA text -->
-
-    <text
-        x="128"
-        y="199"
-        text-anchor="middle"
-        font-family="Arial, Helvetica, sans-serif"
-        font-size="27"
-        font-weight="800"
-        letter-spacing="3"
-        fill="#202133"
-    >
-        BBA
-    </text>
+  <text
+    x="80"
+    y="119"
+    text-anchor="middle"
+    font-family="Arial, sans-serif"
+    font-size="15"
+    font-weight="700"
+    fill="#6d4ce8"
+  >
+    BBA
+  </text>
 
 </svg>
