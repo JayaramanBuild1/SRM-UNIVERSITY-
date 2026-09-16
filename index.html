@@ -1,957 +1,708 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+    <meta charset="UTF-8">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-  <meta
-    name="description"
-    content="SRM BBA Student Portal - Academic workspace for study management, live classes, progress, materials and assessments."
-  >
+    <meta
+        name="description"
+        content="SRM BBA Student Portal - Academic Dashboard"
+    >
 
-  <meta
-    name="theme-color"
-    content="#5b55e8"
-  >
+    <title>SRM BBA Student Portal | Version 3</title>
 
-  <title>SRM BBA Student Portal | Version 2</title>
+    <link rel="icon" type="image/svg+xml" href="logo.svg">
 
-  <link
-    rel="icon"
-    type="image/svg+xml"
-    href="logo.svg"
-  >
+    <link rel="stylesheet" href="styles.css">
 
-  <link
-    rel="stylesheet"
-    href="styles.css"
-  >
+    <script src="app.js" defer></script>
 </head>
 
 <body>
 
-  <!-- =====================================================
-       LOGIN APPLICATION
-       ===================================================== -->
+<!-- =========================================================
+     APPLICATION
+========================================================= -->
 
-  <div
-    id="loginScreen"
-    class="login-screen"
-  >
+<div id="portalApp" class="portal-app">
 
-    <div class="login-background"></div>
+    <!-- =====================================================
+         TOP HEADER
+    ====================================================== -->
 
-    <div class="login-wrapper">
+    <header class="top-header">
 
-      <!-- Brand -->
-      <div class="login-brand">
+        <div class="brand-area">
 
-        <div class="login-logo">
-          <img
-            src="logo.svg"
-            alt="SRM BBA"
-          >
-        </div>
+            <button
+                type="button"
+                id="sidebarToggle"
+                class="icon-button"
+                aria-label="Toggle sidebar"
+            >
+                ☰
+            </button>
 
-        <div>
-          <h1>SRM BBA</h1>
-          <p>Student Portal</p>
-        </div>
+            <div class="brand-logo">
+                <img
+                    src="logo.svg"
+                    alt="SRM BBA"
+                >
+            </div>
 
-      </div>
-
-
-      <!-- Login Card -->
-      <div class="login-card">
-
-        <div class="login-heading">
-
-          <span class="eyebrow">
-            ACADEMIC WORKSPACE
-          </span>
-
-          <h2>
-            Welcome back
-          </h2>
-
-          <p>
-            Sign in to continue to your SRM BBA portal.
-          </p>
+            <div class="brand-text">
+                <strong>SRM BBA</strong>
+                <span>Student Portal</span>
+            </div>
 
         </div>
 
 
-        <!-- Login Role Selector -->
-        <div
-          class="login-role-switch"
-          role="tablist"
-          aria-label="Login type"
-        >
+        <div class="header-right">
 
-          <button
-            type="button"
-            class="login-role active"
-            id="studentRoleBtn"
-            data-role="student"
-            role="tab"
-            aria-selected="true"
-          >
-            <span class="role-icon">🎓</span>
+            <div
+                id="studentStatus"
+                class="status-indicator"
+                title="Student status"
+            >
+                <span class="status-light"></span>
+                <span>Student</span>
+            </div>
 
-            <span>
-              <strong>Student</strong>
-              <small>Student Portal</small>
-            </span>
-          </button>
+            <!-- LOGIN BUTTON -->
+            <button
+                type="button"
+                id="openLoginButton"
+                class="header-login-button"
+            >
+                🔐 Login
+            </button>
 
-
-          <button
-            type="button"
-            class="login-role"
-            id="adminRoleBtn"
-            data-role="admin"
-            role="tab"
-            aria-selected="false"
-          >
-            <span class="role-icon">⚙️</span>
-
-            <span>
-              <strong>Admin</strong>
-              <small>Control Centre</small>
-            </span>
-          </button>
-
-        </div>
-
-
-        <!-- Student Login Form -->
-        <form
-          id="studentLoginForm"
-          class="login-form active"
-          autocomplete="off"
-        >
-
-          <input
-            type="hidden"
-            name="role"
-            value="student"
-          >
-
-          <div class="form-group">
-
-            <label for="studentUsername">
-              Student Username
-            </label>
-
-            <input
-              type="text"
-              id="studentUsername"
-              name="username"
-              placeholder="Enter student username"
-              autocomplete="username"
-              required
+            <!-- USER AREA -->
+            <div
+                id="loggedUserArea"
+                class="logged-user-area"
+                hidden
             >
 
-          </div>
+                <div class="user-avatar">
+                    SJ
+                </div>
 
+                <div class="user-info">
+                    <strong id="headerUserName">
+                        Guest
+                    </strong>
 
-          <div class="form-group">
+                    <span id="headerUserRole">
+                        Guest
+                    </span>
+                </div>
 
-            <label for="studentPassword">
-              Password
-            </label>
-
-            <div class="password-field">
-
-              <input
-                type="password"
-                id="studentPassword"
-                name="password"
-                placeholder="Enter password"
-                autocomplete="current-password"
-                required
-              >
-
-              <button
-                type="button"
-                class="password-toggle"
-                data-target="studentPassword"
-                aria-label="Show password"
-              >
-                👁
-              </button>
+                <button
+                    type="button"
+                    id="logoutButton"
+                    class="logout-button"
+                >
+                    Logout
+                </button>
 
             </div>
 
-          </div>
+        </div>
+
+    </header>
 
 
-          <button
-            type="submit"
-            class="btn btn-primary btn-login"
-          >
-            <span>Sign in as Student</span>
-            <span>→</span>
-          </button>
+    <!-- =====================================================
+         MAIN LAYOUT
+    ====================================================== -->
 
-        </form>
+    <div class="portal-layout">
 
+        <!-- =================================================
+             SIDEBAR
+        ================================================== -->
 
-        <!-- Admin Login Form -->
-        <form
-          id="adminLoginForm"
-          class="login-form"
-          autocomplete="off"
-          hidden
+        <aside
+            id="sidebar"
+            class="sidebar"
         >
 
-          <input
-            type="hidden"
-            name="role"
-            value="admin"
-          >
+            <div class="sidebar-profile">
 
-          <div class="form-group">
+                <div class="profile-avatar">
+                    SJ
+                </div>
 
-            <label for="adminUsername">
-              Admin Username
-            </label>
+                <div>
+                    <strong id="sidebarUserName">
+                        S Jayaraman
+                    </strong>
 
-            <input
-              type="text"
-              id="adminUsername"
-              name="username"
-              placeholder="Enter admin username"
-              autocomplete="username"
-              required
-            >
-
-          </div>
-
-
-          <div class="form-group">
-
-            <label for="adminPassword">
-              Password
-            </label>
-
-            <div class="password-field">
-
-              <input
-                type="password"
-                id="adminPassword"
-                name="password"
-                placeholder="Enter password"
-                autocomplete="current-password"
-                required
-              >
-
-              <button
-                type="button"
-                class="password-toggle"
-                data-target="adminPassword"
-                aria-label="Show password"
-              >
-                👁
-              </button>
+                    <span>
+                        SRM BBA
+                    </span>
+                </div>
 
             </div>
 
-          </div>
 
-
-          <button
-            type="submit"
-            class="btn btn-primary btn-login"
-          >
-            <span>Sign in as Admin</span>
-            <span>→</span>
-          </button>
-
-        </form>
-
-
-        <!-- Login Message -->
-        <div
-          id="loginMessage"
-          class="login-message"
-          role="alert"
-          aria-live="polite"
-        ></div>
-
-
-        <!-- Official Login -->
-        <div class="login-divider">
-          <span>or</span>
-        </div>
-
-        <a
-          href="https://sp.srmist.edu.in/srmiststudentportal/students/loginManager/youLogin.jsp"
-          id="loginOfficialSrm"
-          class="official-login-button"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <span>↗</span>
-          SRM Official Login
-        </a>
-
-
-        <div class="login-security-note">
-
-          <span>🔒</span>
-
-          <p>
-            This portal login is separate from your official
-            SRM account.
-          </p>
-
-        </div>
-
-      </div>
-
-
-      <div class="login-footer">
-        <span>SRM BBA</span>
-        <span>•</span>
-        <span>2026–2029</span>
-        <span>•</span>
-        <span>Version 2</span>
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- =====================================================
-       MAIN PORTAL APPLICATION
-       ===================================================== -->
-
-  <div
-    id="portalApp"
-    class="portal-app"
-    hidden
-  >
-
-
-    <!-- ===================================================
-         SIDEBAR
-         =================================================== -->
-
-    <aside
-      class="sidebar"
-      id="sidebar"
-    >
-
-      <div class="sidebar-top">
-
-        <div class="brand">
-
-          <div class="brand-mark">
-            <span>S</span>
-          </div>
-
-          <div class="brand-text">
-
-            <strong>
-              SRM BBA
-            </strong>
-
-            <span>
-              STUDENT PORTAL
-            </span>
-
-          </div>
-
-        </div>
-
-
-        <button
-          type="button"
-          id="sidebarCollapse"
-          class="sidebar-collapse"
-          aria-label="Collapse sidebar"
-        >
-          ‹
-        </button>
-
-      </div>
-
-
-      <!-- Student Navigation -->
-      <nav
-        class="sidebar-nav"
-        id="studentNavigation"
-        aria-label="Student navigation"
-      >
-
-        <button
-          type="button"
-          class="nav-item active"
-          data-section="dashboard"
-        >
-          <span class="nav-icon">⌂</span>
-          <span class="nav-label">Dashboard</span>
-        </button>
-
-
-        <button
-          type="button"
-          class="nav-item"
-          data-section="courses"
-        >
-          <span class="nav-icon">▣</span>
-          <span class="nav-label">My Courses</span>
-        </button>
-
-
-        <button
-          type="button"
-          class="nav-item"
-          data-section="live"
-        >
-          <span class="nav-icon">▶</span>
-          <span class="nav-label">Live Classes</span>
-        </button>
-
-
-        <button
-          type="button"
-          class="nav-item"
-          data-section="materials"
-        >
-          <span class="nav-icon">▤</span>
-          <span class="nav-label">Study Materials</span>
-        </button>
-
-
-        <button
-          type="button"
-          class="nav-item"
-          data-section="assignments"
-        >
-          <span class="nav-icon">✓</span>
-          <span class="nav-label">Assignments</span>
-        </button>
-
-
-        <button
-          type="button"
-          class="nav-item"
-          data-section="calendar"
-        >
-          <span class="nav-icon">□</span>
-          <span class="nav-label">Calendar</span>
-        </button>
-
-
-        <button
-          type="button"
-          class="nav-item"
-          data-section="exams"
-        >
-          <span class="nav-icon">◇</span>
-          <span class="nav-label">Examinations</span>
-        </button>
-
-
-        <button
-          type="button"
-          class="nav-item"
-          data-section="announcements"
-        >
-          <span class="nav-icon">!</span>
-          <span class="nav-label">Announcements</span>
-        </button>
-
-
-        <button
-          type="button"
-          class="nav-item"
-          data-section="analytics"
-        >
-          <span class="nav-icon">◉</span>
-          <span class="nav-label">Analytics</span>
-        </button>
-
-
-        <button
-          type="button"
-          class="nav-item"
-          data-section="profile"
-        >
-          <span class="nav-icon">◎</span>
-          <span class="nav-label">Profile</span>
-        </button>
-
-      </nav>
-
-
-      <!-- Bottom Navigation -->
-      <div class="sidebar-bottom">
-
-        <button
-          type="button"
-          class="nav-item admin-nav-item"
-          id="adminNavButton"
-          data-section="admin"
-          hidden
-        >
-          <span class="nav-icon">⚙</span>
-          <span class="nav-label">Admin Control Centre</span>
-        </button>
-
-
-        <button
-          type="button"
-          class="nav-item"
-          id="sidebarSrmLogin"
-        >
-          <span class="nav-icon">↗</span>
-          <span class="nav-label">SRM Official Login</span>
-        </button>
-
-
-        <button
-          type="button"
-          class="nav-item logout-nav-item"
-          id="sidebarLogout"
-        >
-          <span class="nav-icon">↪</span>
-          <span class="nav-label">Logout</span>
-        </button>
-
-      </div>
-
-    </aside>
-
-
-    <!-- ===================================================
-         MAIN CONTENT
-         =================================================== -->
-
-    <main class="main">
-
-
-      <!-- =================================================
-           TOP BAR
-           ================================================= -->
-
-      <header class="topbar">
-
-        <div class="topbar-left">
-
-          <button
-            type="button"
-            class="mobile-menu"
-            id="mobileMenu"
-            aria-label="Open menu"
-          >
-            ☰
-          </button>
-
-
-          <div class="page-heading">
-
-            <span>
-              SRM BBA • 2026–2029
-            </span>
-
-            <h1 id="pageTitle">
-              Dashboard
-            </h1>
-
-          </div>
-
-        </div>
-
-
-        <div class="topbar-actions">
-
-          <div class="global-search">
-
-            <span>⌕</span>
-
-            <input
-              type="search"
-              id="globalSearch"
-              placeholder="Search courses, materials, classes..."
-              aria-label="Search portal"
-            >
-
-          </div>
-
-
-          <button
-            type="button"
-            class="icon-button"
-            id="themeToggle"
-            title="Toggle theme"
-            aria-label="Toggle dark mode"
-          >
-            ☾
-          </button>
-
-
-          <button
-            type="button"
-            class="icon-button notification-button"
-            id="notificationBtn"
-            title="Notifications"
-            aria-label="Notifications"
-          >
-            🔔
-            <span
-              id="notificationDot"
-              class="notification-dot"
-              hidden
-            ></span>
-          </button>
-
-
-          <button
-            type="button"
-            class="profile-mini"
-            id="profileMiniButton"
-            data-section="profile"
-          >
-
-            <span
-              class="profile-avatar"
-              id="profileAvatar"
-            >
-              SJ
-            </span>
-
-            <span class="profile-mini-text">
-
-              <strong id="profileMiniName">
-                S. J. Raman
-              </strong>
-
-              <small id="profileMiniRole">
-                BBA Student
-              </small>
-
-            </span>
-
-          </button>
-
-        </div>
-
-      </header>
-
-
-      <!-- =================================================
-           PAGE CONTENT
-           ================================================= -->
-
-      <div class="content">
+            <nav class="sidebar-navigation">
+
+                <button
+                    type="button"
+                    class="nav-button active"
+                    data-section="dashboard"
+                >
+                    <span>🏠</span>
+                    <span>Dashboard</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="nav-button"
+                    data-section="courses"
+                >
+                    <span>📚</span>
+                    <span>My Courses</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="nav-button"
+                    data-section="progress"
+                >
+                    <span>📊</span>
+                    <span>Weekly Progress</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="nav-button"
+                    data-section="liveClasses"
+                >
+                    <span>🎥</span>
+                    <span>Live Classes</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="nav-button"
+                    data-section="assignments"
+                >
+                    <span>📝</span>
+                    <span>Assignments</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="nav-button"
+                    data-section="materials"
+                >
+                    <span>📁</span>
+                    <span>Study Materials</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="nav-button"
+                    data-section="calendar"
+                >
+                    <span>📅</span>
+                    <span>Academic Calendar</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="nav-button"
+                    data-section="exams"
+                >
+                    <span>🎓</span>
+                    <span>Examination</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="nav-button"
+                    data-section="announcements"
+                >
+                    <span>📢</span>
+                    <span>Announcements</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="nav-button"
+                    data-section="analytics"
+                >
+                    <span>📈</span>
+                    <span>Analytics</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="nav-button"
+                    data-section="profile"
+                >
+                    <span>👤</span>
+                    <span>Profile</span>
+                </button>
+
+                <!-- ADMIN BUTTON IS HIDDEN UNTIL ADMIN LOGIN -->
+                <button
+                    type="button"
+                    id="adminNavButton"
+                    class="nav-button admin-nav-button"
+                    data-section="admin"
+                    hidden
+                >
+                    <span>⚙️</span>
+                    <span>Admin Control Centre</span>
+                </button>
+
+            </nav>
+
+
+            <div class="sidebar-bottom">
+
+                <button
+                    type="button"
+                    id="themeToggle"
+                    class="sidebar-action"
+                >
+                    🌙
+                    <span>Dark Mode</span>
+                </button>
+
+                <button
+                    type="button"
+                    id="officialSRMButton"
+                    class="sidebar-action"
+                >
+                    🔗
+                    <span>Official SRM Portal</span>
+                </button>
+
+            </div>
+
+        </aside>
 
 
         <!-- =================================================
-             DASHBOARD
-             ================================================= -->
+             MAIN CONTENT
+        ================================================== -->
 
-        <section
-          id="dashboard"
-          class="page-section active"
-        >
+        <main class="main-content">
 
-          <div class="welcome-row">
+            <!-- =============================================
+                 DASHBOARD
+            ============================================== -->
 
-            <div>
-
-              <span
-                class="date-label"
-                id="dashboardDate"
-              >
-                Wednesday, 16 September 2026
-              </span>
-
-              <h2>
-                Good afternoon, Raman 👋
-              </h2>
-
-              <p>
-                Your academic workspace for the SRM BBA programme.
-              </p>
-
-            </div>
-
-
-            <div
-              id="studentStatus"
-              class="status-pill active"
-            >
-              <span class="status-dot"></span>
-              <span class="status-text">
-                Student Portal Active
-              </span>
-            </div>
-
-          </div>
-
-
-          <!-- Next Class + Progress -->
-          <div class="dashboard-hero-grid">
-
-
-            <!-- Next Class -->
-            <article class="next-class-card">
-
-              <div class="next-class-top">
-
-                <div>
-
-                  <span class="card-eyebrow">
-                    NEXT UPCOMING CLASS
-                  </span>
-
-                  <h2 id="nextClassSubject">
-                    Loading class...
-                  </h2>
-
-                </div>
-
-                <span
-                  class="class-status-badge"
-                  id="nextClassStatus"
-                >
-                  UPCOMING
-                </span>
-
-              </div>
-
-
-              <div
-                class="countdown"
-                id="countdown"
-              >
-                00:00:00
-              </div>
-
-
-              <div class="next-class-details">
-
-                <div class="detail-chip">
-                  <span>📅</span>
-                  <strong id="nextClassDate">
-                    —
-                  </strong>
-                </div>
-
-                <div class="detail-chip">
-                  <span>◷</span>
-                  <strong id="nextClassTime">
-                    —
-                  </strong>
-                </div>
-
-                <div class="detail-chip">
-                  <span>●</span>
-                  <strong id="nextClassMeeting">
-                    —
-                  </strong>
-                </div>
-
-              </div>
-
-
-              <div class="next-class-actions">
-
-                <button
-                  type="button"
-                  class="btn btn-light"
-                  id="joinNextClass"
-                >
-                  Join Zoom Class ↗
-                </button>
-
-                <button
-                  type="button"
-                  class="btn btn-glass"
-                  id="viewScheduleButton"
-                  data-section="live"
-                >
-                  View Schedule
-                </button>
-
-              </div>
-
-            </article>
-
-
-            <!-- Academic Progress -->
-            <article class="progress-card">
-
-              <div class="card-header">
-
-                <div>
-
-                  <span class="card-eyebrow">
-                    ACADEMIC PROGRESS
-                  </span>
-
-                  <h3>
-                    Overall Completion
-                  </h3>
-
-                </div>
-
-                <strong
-                  id="overallProgress"
-                  class="progress-percent"
-                >
-                  0%
-                </strong>
-
-              </div>
-
-
-              <div
-                class="progress-ring"
-                id="progressRing"
-              >
-
-                <div class="progress-ring-inner">
-
-                  <strong id="overallProgressInner">
-                    0%
-                  </strong>
-
-                  <span>
-                    completed
-                  </span>
-
-                </div>
-
-              </div>
-
-
-              <div class="progress-stats">
-
-                <div>
-                  <strong id="completedWeeks">
-                    0
-                  </strong>
-                  <span>Weeks done</span>
-                </div>
-
-                <div>
-                  <strong id="inProcessWeeks">
-                    0
-                  </strong>
-                  <span>In process</span>
-                </div>
-
-                <div>
-                  <strong id="pendingWeeks">
-                    105
-                  </strong>
-                  <span>Pending</span>
-                </div>
-
-              </div>
-
-            </article>
-
-          </div>
-
-
-          <!-- Summary Cards -->
-          <div class="stats-grid">
-
-            <button
-              type="button"
-              class="stat-card clickable-card"
-              data-section="courses"
+            <section
+                id="section-dashboard"
+                class="content-section active"
             >
 
-              <span class="stat-icon">
-                ▣
-              </span>
+                <div class="page-heading">
 
-              <span>
-                <small>Total Courses</small>
-                <strong>7</strong>
-                <em>Active</em>
-              </span>
+                    <div>
+                        <p class="eyebrow">
+                            SRM BBA • 2026–2029
+                        </p>
 
-            </button>
+                        <h1>
+                            Welcome back, Jayaraman
+                        </h1>
+
+                        <p>
+                            Your academic home dashboard.
+                        </p>
+                    </div>
+
+                    <div class="dashboard-date">
+                        <span>Today</span>
+                        <strong id="currentDate">
+                            —
+                        </strong>
+                    </div>
+
+                </div>
 
 
-            <button
-              type="button"
-              class="stat-card clickable-card"
-              data-section="courses"
+                <!-- SUMMARY CARDS -->
+
+                <div class="summary-grid">
+
+                    <article class="summary-card">
+                        <span class="summary-icon">📚</span>
+
+                        <div>
+                            <span>Courses</span>
+                            <strong id="courseCount">
+                                7
+                            </strong>
+                        </div>
+                    </article>
+
+
+                    <article class="summary-card">
+                        <span class="summary-icon">📅</span>
+
+                        <div>
+                            <span>Study Weeks</span>
+                            <strong>
+                                15
+                            </strong>
+                        </div>
+                    </article>
+
+
+                    <article class="summary-card">
+                        <span class="summary-icon">📊</span>
+
+                        <div>
+                            <span>Overall Progress</span>
+                            <strong id="overallProgress">
+                                0%
+                            </strong>
+                        </div>
+                    </article>
+
+
+                    <article class="summary-card">
+                        <span class="summary-icon">🎥</span>
+
+                        <div>
+                            <span>Next Class</span>
+                            <strong id="nextClassShort">
+                                —
+                            </strong>
+                        </div>
+                    </article>
+
+                </div>
+
+
+                <!-- =========================================
+                     UPCOMING CLASS + COUNTDOWN
+                ========================================== -->
+
+                <div class="dashboard-grid">
+
+                    <article class="dashboard-card countdown-card">
+
+                        <div class="card-header">
+
+                            <div>
+                                <span class="card-label">
+                                    Upcoming Zoom Class
+                                </span>
+
+                                <h2 id="countdownClassName">
+                                    No upcoming class
+                                </h2>
+                            </div>
+
+                            <span class="live-badge">
+                                LIVE SCHEDULE
+                            </span>
+
+                        </div>
+
+
+                        <div class="class-information">
+
+                            <div>
+                                <span>Date</span>
+                                <strong id="countdownClassDate">
+                                    —
+                                </strong>
+                            </div>
+
+                            <div>
+                                <span>Time</span>
+                                <strong id="countdownClassTime">
+                                    —
+                                </strong>
+                            </div>
+
+                        </div>
+
+
+                        <div class="countdown-display">
+
+                            <div>
+                                <strong id="countdownDays">
+                                    00
+                                </strong>
+                                <span>Days</span>
+                            </div>
+
+                            <div>
+                                <strong id="countdownHours">
+                                    00
+                                </strong>
+                                <span>Hours</span>
+                            </div>
+
+                            <div>
+                                <strong id="countdownMinutes">
+                                    00
+                                </strong>
+                                <span>Minutes</span>
+                            </div>
+
+                            <div>
+                                <strong id="countdownSeconds">
+                                    00
+                                </strong>
+                                <span>Seconds</span>
+                            </div>
+
+                        </div>
+
+
+                        <div class="card-actions">
+
+                            <button
+                                type="button"
+                                id="joinNextClassButton"
+                                class="primary-button"
+                                disabled
+                            >
+                                🎥 Join Zoom Class
+                            </button>
+
+                            <button
+                                type="button"
+                                data-section="liveClasses"
+                                class="secondary-button"
+                            >
+                                View Schedule
+                            </button>
+
+                        </div>
+
+                    </article>
+
+
+                    <!-- SESSION -->
+
+                    <article class="dashboard-card session-card">
+
+                        <div class="card-header">
+
+                            <div>
+                                <span class="card-label">
+                                    Student Session
+                                </span>
+
+                                <h2>
+                                    Activity Monitor
+                                </h2>
+                            </div>
+
+                            <span
+                                id="sessionStatus"
+                                class="session-status"
+                            >
+                                Offline
+                            </span>
+
+                        </div>
+
+
+                        <div class="session-clock">
+
+                            <span>
+                                Session Time
+                            </span>
+
+                            <strong id="sessionTimer">
+                                00:00:00
+                            </strong>
+
+                        </div>
+
+
+                        <div class="break-area">
+
+                            <div>
+                                <span>
+                                    15-Minute Break
+                                </span>
+
+                                <strong id="breakTimer">
+                                    15:00
+                                </strong>
+                            </div>
+
+                            <button
+                                type="button"
+                                id="breakButton"
+                                class="secondary-button"
+                            >
+                                Start Break
+                            </button>
+
+                        </div>
+
+                    </article>
+
+                </div>
+
+
+                <!-- =========================================
+                     COURSE PROGRESS
+                ========================================== -->
+
+                <article class="dashboard-card">
+
+                    <div class="card-header">
+
+                        <div>
+                            <span class="card-label">
+                                Academic Monitor
+                            </span>
+
+                            <h2>
+                                Course Progress
+                            </h2>
+                        </div>
+
+                        <button
+                            type="button"
+                            data-section="progress"
+                            class="text-button"
+                        >
+                            View All →
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        id="dashboardCourseProgress"
+                        class="course-progress-list"
+                    >
+                        <!-- JavaScript renders courses -->
+                    </div>
+
+                </article>
+
+
+                <!-- =========================================
+                     UPCOMING CLASSES
+                ========================================== -->
+
+                <article class="dashboard-card">
+
+                    <div class="card-header">
+
+                        <div>
+                            <span class="card-label">
+                                Schedule
+                            </span>
+
+                            <h2>
+                                Upcoming Classes
+                            </h2>
+                        </div>
+
+                        <button
+                            type="button"
+                            data-section="liveClasses"
+                            class="text-button"
+                        >
+                            Full Schedule →
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        id="dashboardUpcomingClasses"
+                        class="upcoming-class-list"
+                    >
+                        <!-- JavaScript renders classes -->
+                    </div>
+
+                </article>
+
+
+                <!-- =========================================
+                     ANNOUNCEMENTS
+                ========================================== -->
+
+                <article class="dashboard-card">
+
+                    <div class="card-header">
+
+                        <div>
+                            <span class="card-label">
+                                Notice Board
+                            </span>
+
+                            <h2>
+                                Latest Announcements
+                            </h2>
+                        </div>
+
+                        <button
+                            type="button"
+                            data-section="announcements"
+                            class="text-button"
+                        >
+                            View All →
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        id="dashboardAnnouncements"
+                        class="announcement-list"
+                    >
+                        <!-- JavaScript renders announcements -->
+                    </div>
+
+                </article>
+
+            </section>
+
+
+            <!-- =============================================
+                 COURSES
+            ============================================== -->
+
+            <section
+                id="section-courses"
+                class="content-section"
             >
 
-              <span class="stat-icon">
-                ◷
-              </span>
+                <div class="page-heading">
 
-              <span>
-                <small>Weeks</small>
-                <strong>15</strong>
-                <em>Per course</em>
-              </span>
+                    <div>
+                        <p class="eyebrow">
+                            Academic
+                        </p>
 
-            </button>
+                        <h1>
+                            My Courses
+                        </h1>
 
+                        <p>
+                            Your seven SRM BBA courses.
+                        </p>
+                    </div>
 
-            <button
-              type="button"
-              class="stat-card clickable-card"
-              data-section="assignments"
-            >
-
-              <span class="stat-icon">
-                ✓
-              </span>
-
-              <span>
-                <small>Assignments</small>
-                <strong id="assignmentCount">
-                  12
-                </strong>
-                <em>Tracked</em>
-              </span>
-
-            </button>
+                </div>
 
 
-            <button
-              type="button"
-              class="stat-card clickable-card"
-              data-section="materials"
-            >
-
-              <span class="stat-icon">
-                ▤
-              </span>
-
-              <span>
-                <small>Materials</small>
-                <strong id="materialCount">
-                  0
-                </strong>
-                <em>Available</em>
-              </span>
-
-            </button>
-
-          </div>
-
-
-          <!-- Dashboard Lower Grid -->
-          <div class="dashboard-lower-grid">
-
-
-            <!-- Course Progress -->
-            
+                <div
+                
